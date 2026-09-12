@@ -3756,11 +3756,24 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
   }
 
   async function lever(parcelleId) {
-    const res = await onLeverGage(parcelleId, banque);
-    setMsg(res.ok ? { ok: true, text: "Mainlevée émise avec succès. Le bien est de nouveau sain et disponible." } : { ok: false, text: res.error });
-    if (res.ok && compteId) {
+    if (!compteId) return;
+    try {
+      const res = await leverGageSQL(parcelleId, compteId);
+      if (!res.ok) {
+        setMsg({ ok: false, text: "Refus : " + res.raison });
+        return;
+      }
+      setMsg({ ok: true, text: "Mainlevée émise avec succès. Le bien est de nouveau sain et disponible." });
       const list = await chargerGagesActifs(compteId).catch(() => []);
       setGagesDB(list);
+      const al = await chargerAlertesEcheance().catch(() => []);
+      setAlertes(al.filter((x) => x.banque === banque));
+      // Rafraîchir l'état local pour retirer le gage de la parcelle
+      if (typeof onLeverGage === "function") {
+        await onLeverGage(parcelleId, banque);
+      }
+    } catch (e) {
+      setMsg({ ok: false, text: "Erreur : " + e.message });
     }
   }
 
@@ -3860,7 +3873,7 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
                   <td>{p?.proprietaire || "—"}</td>
                   <td className="text-xs font-mono text-stone-500">{g.dossier_credit || "—"}</td>
                   <td>{Number(g.montant).toLocaleString("fr-FR")} FCFA</td>
-                  <td className="text-stone-600">{p?.superficie ? p.superficie + " m²" : "—"}</td>
+                  <td className="text-stone-600">{g.duree_mois ? g.duree_mois + " mois" : "—"}</td>
                   <td className="text-stone-600">{new Date(g.date_pose).toLocaleDateString("fr-FR")}</td>
                   <td>
                     {!readOnly && (
