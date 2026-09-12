@@ -51,3 +51,14 @@ export async function enregistrerConsultation(banqueId, parcelleId, carteId, res
   });
   if (error) throw error;
 }
+
+export async function chargerGagesActifs(banqueId) {
+  const { data, error } = await supabase
+    .from("gages")
+    .select("*")
+    .eq("banque_id", banqueId)
+    .eq("statut", "actif")
+    .order("date_pose", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}

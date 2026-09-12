@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, Fragment } from "react";
 import { loadAll, syncTable, supabase } from "./lib/db";
 import Comptes from "./Comptes";
 import MonPortefeuille from "./MonPortefeuille";
-import { poserGageSQL, leverGageSQL, enregistrerConsultation } from "./lib/gages";
+import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs } from "./lib/gages";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
@@ -3700,8 +3700,14 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
   const [showPose, setShowPose] = useState(false);
   const [msg, setMsg] = useState(null);
   const [nbConsultations, setNbConsultations] = useState(0);
+  const [gagesDB, setGagesDB] = useState([]);
 
-  const mesGages = parcelles.filter((p) => p.statut === "gage" && p.gageInfo?.banque === banque);
+  useEffect(() => {
+    if (!compteId) return;
+    chargerGagesActifs(compteId).then(setGagesDB).catch(console.error);
+  }, [compteId, parcelles]);
+
+  const mesGages = gagesDB;
   const TARIF_CONSULTATION = 2000;
   const TARIF_GAGE = 100000;
   const facturationConsultations = nbConsultations * TARIF_CONSULTATION;
@@ -3728,6 +3734,10 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
   async function lever(parcelleId) {
     const res = await onLeverGage(parcelleId, banque);
     setMsg(res.ok ? { ok: true, text: "Mainlevée émise avec succès. Le bien est de nouveau sain et disponible." } : { ok: false, text: res.error });
+    if (res.ok && compteId) {
+      const list = await chargerGagesActifs(compteId).catch(() => []);
+      setGagesDB(list);
+    }
   }
 
   return (
@@ -3787,21 +3797,24 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
             </tr>
           </thead>
           <tbody>
-            {mesGages.map((p) => (
-              <tr key={p.id} className="border-b border-stone-100">
-                <td className="py-2.5 font-mono text-xs">{p.id}</td>
-                <td>{p.proprietaire}</td>
-                <td className="text-xs font-mono text-stone-500">{p.gageInfo.dossierCredit}</td>
-                <td>{p.gageInfo.montant.toLocaleString("fr-FR")} FCFA</td>
-                <td className="text-stone-600">{p.gageInfo.dureeAns} ans</td>
-                <td className="text-stone-600">{p.gageInfo.dateDebut}</td>
-                <td>
-                  {!readOnly && (
-                    <button onClick={() => lever(p.id)} className="text-xs text-emerald-700 hover:underline">Mainlevée</button>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {mesGages.map((g) => {
+              const p = parcelles.find((x) => x.id === g.parcelle_id);
+              return (
+                <tr key={g.id} className="border-b border-stone-100">
+                  <td className="py-2.5 font-mono text-xs">{g.parcelle_id}</td>
+                  <td>{p?.proprietaire || "—"}</td>
+                  <td className="text-xs font-mono text-stone-500">{g.dossier_credit || "—"}</td>
+                  <td>{Number(g.montant).toLocaleString("fr-FR")} FCFA</td>
+                  <td className="text-stone-600">{p?.superficie ? p.superficie + " m²" : "—"}</td>
+                  <td className="text-stone-600">{new Date(g.date_pose).toLocaleDateString("fr-FR")}</td>
+                  <td>
+                    {!readOnly && (
+                      <button onClick={() => lever(g.parcelle_id)} className="text-xs text-emerald-700 hover:underline">Mainlevée</button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
