@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, Fragment } from "react";
 import { loadAll, syncTable, supabase } from "./lib/db";
 import Comptes from "./Comptes";
 import MonPortefeuille from "./MonPortefeuille";
-import { poserGageSQL, leverGageSQL } from "./lib/gages";
+import { poserGageSQL, leverGageSQL, enregistrerConsultation } from "./lib/gages";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
@@ -1001,6 +1001,7 @@ export default function SigefApp() {
               parcelles={parcelles}
               cartes={cartes}
               banque={currentUser.banque}
+              compteId={currentUser.compteId}
               readOnly={currentUser.readOnly}
               onPoserGage={poserGage}
               onLeverGage={leverGage}
@@ -3693,7 +3694,7 @@ function LaboratoireAnticipation({ parcelles, dossiers, baux, encaissements, ten
 
 // ---------- Sécuri-Gage Foncier (partenaires bancaires) ----------
 
-function SecuriGage({ parcelles, cartes, banque, readOnly, onPoserGage, onLeverGage }) {
+function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage, onLeverGage }) {
   const [saisie, setSaisie] = useState("");
   const [trouve, setTrouve] = useState(undefined);
   const [showPose, setShowPose] = useState(false);
@@ -3707,20 +3708,21 @@ function SecuriGage({ parcelles, cartes, banque, readOnly, onPoserGage, onLeverG
   const facturationGages = mesGages.length * TARIF_GAGE;
   const facturationTotale = facturationConsultations + facturationGages;
 
-  function consulter() {
+  async function consulter() {
     setNbConsultations((n) => n + 1);
     const q = saisie.trim().toUpperCase();
     const parcelle = parcelles.find((p) => p.id.toUpperCase() === q);
-    if (parcelle) {
-      setTrouve({ type: "parcelle", data: parcelle });
-      return;
-    }
     const carte = cartes.find((c) => c.id.toUpperCase() === q);
-    if (carte) {
-      setTrouve({ type: "carte", data: carte });
-      return;
+    if (parcelle) setTrouve({ type: "parcelle", data: parcelle });
+    else if (carte) setTrouve({ type: "carte", data: carte });
+    else setTrouve(null);
+    if (compteId) {
+      try {
+        await enregistrerConsultation(compteId, parcelle?.id || null, carte?.id || null, parcelle ? "trouve" : carte ? "carte" : "introuvable");
+      } catch (e) {
+        console.error("Facturation consultation échouée :", e.message);
+      }
     }
-    setTrouve(null);
   }
 
   async function lever(parcelleId) {

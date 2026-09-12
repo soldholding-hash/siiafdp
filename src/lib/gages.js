@@ -41,3 +41,13 @@ export async function leverGelSQL(parcelleId, tribunalId) {
   if (error) throw error;
   return data;
 }
+
+export async function enregistrerConsultation(banqueId, parcelleId, carteId, resultat) {
+  const { error } = await supabase.from("consultations").insert({
+    banque_id: banqueId,
+    parcelle_id: parcelleId || null,
+    carte_id: carteId || null,
+    resultat: resultat || null,
+  });
+  if (error) throw error;
+}
