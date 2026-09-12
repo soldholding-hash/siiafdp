@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, Fragment } from "react";
 import { loadAll, syncTable, supabase } from "./lib/db";
 import Comptes from "./Comptes";
 import MonPortefeuille from "./MonPortefeuille";
-import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs } from "./lib/gages";
+import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
@@ -466,7 +466,8 @@ export default function SigefApp() {
     const compteId = currentUser.compteId;
     if (compteId) {
       try {
-        const res = await poserGageSQL(parcelleId, compteId, banque, form.montant, form.dossierCredit);
+        const dureeMois = Number(form.dureeAns) * 12 || 60;
+        const res = await poserGageSQL(parcelleId, compteId, banque, form.montant, form.dossierCredit, dureeMois);
         if (!res.ok) {
           const m = res.raison === "double_gage"
             ? `Ce bien est déjà grevé au profit de ${res.banque}. Enregistrement impossible.`
@@ -3701,11 +3702,34 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
   const [msg, setMsg] = useState(null);
   const [nbConsultations, setNbConsultations] = useState(0);
   const [gagesDB, setGagesDB] = useState([]);
+  const [alertes, setAlertes] = useState([]);
 
   useEffect(() => {
     if (!compteId) return;
     chargerGagesActifs(compteId).then(setGagesDB).catch(console.error);
-  }, [compteId, parcelles]);
+    chargerAlertesEcheance().then((a) => setAlertes(a.filter((x) => x.banque === banque))).catch(console.error);
+  }, [compteId, parcelles, banque]);
+
+  async function prolonger(parcelleId) {
+    const mois = prompt("Nombre de mois supplémentaires :", "12");
+    if (!mois || Number(mois) <= 0) return;
+    try {
+      const res = await prolongerGageSQL(parcelleId, compteId, Number(mois));
+      setMsg(res.ok ? { ok: true, text: "Gage prolongé de " + mois + " mois. Nouvelle échéance : " + res.nouvelle_echeance } : { ok: false, text: "Refus : " + res.raison });
+      if (res.ok) {
+        const list = await chargerGagesActifs(compteId);
+        setGagesDB(list);
+      }
+    } catch (e) { setMsg({ ok: false, text: "Erreur : " + e.message }); }
+  }
+
+  async function realiser(parcelleId) {
+    if (!confirm("Confirmer la réalisation du gage ? Cette action engage la procédure contentieuse.")) return;
+    try {
+      const res = await realiserGageSQL(parcelleId, compteId, "défaillance débiteur");
+      setMsg(res.ok ? { ok: true, text: "Réalisation engagée. Le dossier est transmis au Contentieux et au Tribunal." } : { ok: false, text: "Refus : " + res.raison });
+    } catch (e) { setMsg({ ok: false, text: "Erreur : " + e.message }); }
+  }
 
   const mesGages = gagesDB;
   const TARIF_CONSULTATION = 2000;
@@ -3749,6 +3773,37 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
         </div>
         <div className="text-xs text-stone-400 mt-1">Consultation en temps réel de la réalité d'un bien, pose de gage et mainlevée — connectés au registre central du Ministère.</div>
       </div>
+
+      {alertes.length > 0 && (
+        <div className="bg-amber-50 border border-amber-300 rounded-sm p-4">
+          <div className="flex items-center gap-2 text-amber-900 text-sm font-semibold mb-2">
+            <AlertTriangle size={16} />
+            {alertes.length} alerte(s) d'échéance — action requise
+          </div>
+          <div className="space-y-2">
+            {alertes.map((a, i) => (
+              <div key={i} className="text-xs text-amber-800 flex items-center justify-between bg-white border border-amber-200 rounded-sm p-2">
+                <div>
+                  <span className="font-mono">{a.parcelle}</span>
+                  <span className="mx-2">·</span>
+                  <span>
+                    {a.type_alerte === "mi_parcours" && "Mi-parcours du gage"}
+                    {a.type_alerte === "pre_echeance" && "Pré-échéance"}
+                    {a.type_alerte === "echeance" && "Échéance atteinte"}
+                  </span>
+                  <span className="mx-2">·</span>
+                  <span>{a.jours_restants >= 0 ? a.jours_restants + " jours restants" : Math.abs(a.jours_restants) + " jours dépassés"}</span>
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={() => lever(a.parcelle)} className="text-xs px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-sm">Mainlevée</button>
+                  <button onClick={() => prolonger(a.parcelle)} className="text-xs px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-sm">Prolonger</button>
+                  <button onClick={() => realiser(a.parcelle)} className="text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded-sm">Réaliser</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white border border-stone-200 rounded-sm p-5">
         <div className="text-sm font-semibold mb-1">Consultation — scan de la carte foncière</div>

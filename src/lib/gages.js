@@ -62,3 +62,29 @@ export async function chargerGagesActifs(banqueId) {
   if (error) throw error;
   return data || [];
 }
+
+export async function prolongerGageSQL(parcelleId, banqueId, moisSup) {
+  const { data, error } = await supabase.rpc("prolonger_gage", {
+    p_parcelle_id: parcelleId,
+    p_banque_id: banqueId,
+    p_mois_sup: Number(moisSup),
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function realiserGageSQL(parcelleId, banqueId, motif) {
+  const { data, error } = await supabase.rpc("realiser_gage", {
+    p_parcelle_id: parcelleId,
+    p_banque_id: banqueId,
+    p_motif: motif,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function chargerAlertesEcheance() {
+  const { data, error } = await supabase.rpc("notifier_echeances");
+  if (error) throw error;
+  return data || [];
+}
