@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, Fragment } from "react";
 import { loadAll, syncTable, supabase } from "./lib/db";
 import Comptes from "./Comptes";
 import MonPortefeuille from "./MonPortefeuille";
+import { poserGageSQL, leverGageSQL } from "./lib/gages";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
@@ -453,7 +454,7 @@ export default function SigefApp() {
     return { ok: true, id };
   }
 
-  function poserGage(parcelleId, banque, form) {
+  async function poserGage(parcelleId, banque, form) {
     const bien = parcelles.find((p) => p.id === parcelleId);
     if (!bien) return { ok: false, error: "Parcelle introuvable." };
     if (bien.statut === "gage") {
@@ -462,6 +463,20 @@ export default function SigefApp() {
     if (bien.statut !== "titre") {
       return { ok: false, error: `Ce bien n'est pas dans un état permettant une hypothèque (statut actuel : ${STATUT_STYLE[bien.statut]?.label || bien.statut}).` };
     }
+    const compteId = currentUser.compteId;
+    if (compteId) {
+      try {
+        const res = await poserGageSQL(parcelleId, compteId, banque, form.montant, form.dossierCredit);
+        if (!res.ok) {
+          const m = res.raison === "double_gage"
+            ? `Ce bien est déjà grevé au profit de ${res.banque}. Enregistrement impossible.`
+            : `Refus du registre central : ${res.raison}.`;
+          return { ok: false, error: m };
+        }
+      } catch (e) {
+        return { ok: false, error: "Erreur de connexion au registre central : " + e.message };
+      }
+    }
     const gageInfo = { banque, dossierCredit: form.dossierCredit, montant: Number(form.montant), dureeAns: Number(form.dureeAns), dateDebut: new Date().toISOString().slice(0, 10) };
     setParcelles((ps) => ps.map((p) => (p.id === parcelleId ? { ...p, statutAvantGage: p.statut, statut: "gage", gageInfo } : p)));
     log(`${banque} — Sécuri-Gage`, `Pose de gage sur ${parcelleId} — dossier crédit ${form.dossierCredit}, ${Number(form.montant).toLocaleString("fr-FR")} FCFA sur ${form.dureeAns} ans. Verrou de mutation activé.`);
@@ -469,10 +484,19 @@ export default function SigefApp() {
     return { ok: true };
   }
 
-  function leverGage(parcelleId, banque) {
+  async function leverGage(parcelleId, banque) {
     const bien = parcelles.find((p) => p.id === parcelleId);
     if (!bien || bien.statut !== "gage") return { ok: false, error: "Aucun gage actif sur ce bien." };
     if (bien.gageInfo.banque !== banque) return { ok: false, error: "Seule la banque ayant posé le gage peut émettre la mainlevée." };
+    const compteId = currentUser.compteId;
+    if (compteId) {
+      try {
+        const res = await leverGageSQL(parcelleId, compteId);
+        if (!res.ok) return { ok: false, error: `Refus : ${res.raison}` };
+      } catch (e) {
+        return { ok: false, error: "Erreur de connexion : " + e.message };
+      }
+    }
     setParcelles((ps) => ps.map((p) => (p.id === parcelleId ? { ...p, statut: p.statutAvantGage || "titre", gageInfo: null, statutAvantGage: null } : p)));
     log(`${banque} — Sécuri-Gage`, `Mainlevée émise sur ${parcelleId} — dossier crédit ${bien.gageInfo.dossierCredit} soldé. Bien redevenu sain et disponible.`);
     notify(bien.proprietaire, `Mainlevée reçue de ${banque} — votre bien ${parcelleId} est de nouveau sain et disponible pour toute transaction.`, "SMS");
@@ -3677,8 +3701,8 @@ function SecuriGage({ parcelles, cartes, banque, readOnly, onPoserGage, onLeverG
   const [nbConsultations, setNbConsultations] = useState(0);
 
   const mesGages = parcelles.filter((p) => p.statut === "gage" && p.gageInfo?.banque === banque);
-  const TARIF_CONSULTATION = 500;
-  const TARIF_GAGE = 5000;
+  const TARIF_CONSULTATION = 2000;
+  const TARIF_GAGE = 100000;
   const facturationConsultations = nbConsultations * TARIF_CONSULTATION;
   const facturationGages = mesGages.length * TARIF_GAGE;
   const facturationTotale = facturationConsultations + facturationGages;
@@ -3699,8 +3723,8 @@ function SecuriGage({ parcelles, cartes, banque, readOnly, onPoserGage, onLeverG
     setTrouve(null);
   }
 
-  function lever(parcelleId) {
-    const res = onLeverGage(parcelleId, banque);
+  async function lever(parcelleId) {
+    const res = await onLeverGage(parcelleId, banque);
     setMsg(res.ok ? { ok: true, text: "Mainlevée émise avec succès. Le bien est de nouveau sain et disponible." } : { ok: false, text: res.error });
   }
 
@@ -3813,8 +3837,8 @@ function FicheBienBancaire({ parcelle: p, banque, readOnly, onPoserGage, onLever
   const gagePar = p.statut === "gage" ? p.gageInfo.banque : null;
   const estMonGage = gagePar === banque;
 
-  function submitGage() {
-    const res = onPoserGage(p.id, banque, form);
+  async function submitGage() {
+    const res = await onPoserGage(p.id, banque, form);
     if (!res.ok) setErr(res.error);
     else { setErr(null); setShowForm(false); }
   }
