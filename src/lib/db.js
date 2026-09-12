@@ -55,3 +55,15 @@ export async function syncTable(table, rows) {
   const { error } = await supabase.from(table).upsert(payload);
   if (error) console.error(`Erreur de synchronisation (${table}) :`, error.message);
 }
+
+export async function chargerMonProfil() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("role, compte_id, nom_complet, parent_id")
+    .eq("id", user.id)
+    .single();
+  if (error) return null;
+  return data;
+}

@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from "react";
-import { loadAll, syncTable, supabase } from "./lib/db";
+import { loadAll, syncTable, supabase, chargerMonProfil } from "./lib/db";
 import Comptes from "./Comptes";
 import MonPortefeuille from "./MonPortefeuille";
+import MesAgents from "./MesAgents";
 import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
@@ -102,6 +103,7 @@ const NAV = [
   { id: "tresor", label: "Trésor / Régie", icon: Banknote },
   { id: "comptes", label: "Comptes partenaires", icon: Wallet },
   { id: "portefeuille", label: "Mon portefeuille", icon: Wallet },
+  { id: "mes_agents", label: "Mes agents", icon: Users },
   { id: "audit", label: "Journal d'audit", icon: ShieldCheck },
   { id: "rh", label: "Ressources humaines", icon: Users },
   { id: "rapports", label: "Rapports (BI)", icon: BarChart3 },
@@ -123,15 +125,15 @@ const USERS = [
   { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["titres", "cartes"] },
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["domaine"] },
   { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet"] },
-  { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
+  { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
   { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["workflow"] },
   { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["tresor"] },
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["rh"] },
   { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["dashboard", "comptes", "audit", "rapports"] },
-  { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
-  { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
-  { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["portefeuille", "judiciaire"], compteId: "CPT-TGI" },
+  { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
+  { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
+  { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
   { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
@@ -252,6 +254,15 @@ export default function SigefApp() {
     if (error || !data.user) return "Identifiant ou mot de passe incorrect.";
     const user = USERS.find((u) => u.username === username);
     if (!user) { await supabase.auth.signOut(); return "Compte non reconnu."; }
+    // Charger le rôle Supabase (principal / agent_gestion / agent_lecture)
+    try {
+      const profil = await chargerMonProfil();
+      if (profil) {
+        user.banqueRole = profil.role;
+        if (profil.compte_id) user.compteId = profil.compte_id;
+      }
+    } catch (e) { console.error("Profil non chargé :", e.message); }
+
     setCurrentUser(user);
     setView(user.views[0]);
     setAudit((a) => [{ id: a.length + 1, ts: nowStamp(), user: user.nom, action: `Connexion au système (service : ${user.service})` }, ...a]);
@@ -961,6 +972,7 @@ export default function SigefApp() {
 
           {view === "comptes" && <Comptes />}
           {view === "portefeuille" && currentUser.compteId && <MonPortefeuille compteId={currentUser.compteId} />}
+          {view === "mes_agents" && <MesAgents />}
 
           {view === "audit" && <Audit audit={audit} readOnly={currentUser.readOnly} service={currentUser.service} />}
 
