@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from "react";
-import { loadAll, syncTable } from "./lib/db";
+import { loadAll, syncTable, supabase } from "./lib/db";
+import Comptes from "./Comptes";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
   ChevronRight, X, Landmark, Banknote, Building2, QrCode, Bell, Eye,
   CreditCard, Lock, Send, ArrowLeftRight, Globe, Layers, MapPin, ArrowLeft,
-  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic
+  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -97,6 +98,7 @@ const NAV = [
   { id: "guichet_externe", label: "Guichet externe", icon: Building2 },
   { id: "workflow", label: "Workflow", icon: GitBranch },
   { id: "tresor", label: "Trésor / Régie", icon: Banknote },
+  { id: "comptes", label: "Comptes partenaires", icon: Wallet },
   { id: "audit", label: "Journal d'audit", icon: ShieldCheck },
   { id: "rh", label: "Ressources humaines", icon: Users },
   { id: "rapports", label: "Rapports (BI)", icon: BarChart3 },
@@ -123,11 +125,11 @@ const USERS = [
   { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["tresor"] },
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["rh"] },
-  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["dashboard", "audit", "rapports"] },
+  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["dashboard", "comptes", "audit", "rapports"] },
   { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["securigage"], banque: "MUCODEC" },
   { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["securigage"], banque: "COFINA" },
   { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["judiciaire"] },
-  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "tresor", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
+  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
 function rectsOverlap(a, b) {
@@ -241,9 +243,12 @@ export default function SigefApp() {
     });
   }
 
-  function handleLogin(username, password) {
-    const user = USERS.find((u) => u.username === username && u.password === password);
-    if (!user) return "Identifiant ou mot de passe incorrect.";
+  async function handleLogin(username, password) {
+    const email = `${username}@siiafdp.cg`;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) return "Identifiant ou mot de passe incorrect.";
+    const user = USERS.find((u) => u.username === username);
+    if (!user) { await supabase.auth.signOut(); return "Compte non reconnu."; }
     setCurrentUser(user);
     setView(user.views[0]);
     setAudit((a) => [{ id: a.length + 1, ts: nowStamp(), user: user.nom, action: `Connexion au système (service : ${user.service})` }, ...a]);
@@ -927,6 +932,8 @@ export default function SigefApp() {
             <Tresor encaissements={encaissements} dossiers={dossiers} parcelles={parcelles} onAdd={() => setShowAddEncaissement(true)} readOnly={currentUser.readOnly} />
           )}
 
+          {view === "comptes" && <Comptes />}
+
           {view === "audit" && <Audit audit={audit} readOnly={currentUser.readOnly} service={currentUser.service} />}
 
           {view === "rh" && <RH agents={agents} />}
@@ -1025,8 +1032,9 @@ function LoginScreen({ onLogin, onCardLogin, citizenError, parcelles, cartes }) 
   const [cardId, setCardId] = useState("");
   const [pin, setPin] = useState("");
 
-  function submit() {
-    const err = onLogin(username.trim(), password);
+  async function submit() {
+    setError("Vérification en cours...");
+    const err = await onLogin(username.trim(), password);
     setError(err);
   }
 
