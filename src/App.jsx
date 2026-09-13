@@ -249,19 +249,52 @@ export default function SigefApp() {
   }
 
   async function handleLogin(username, password) {
-    const email = `${username}@siiafdp.cg`;
+    const email = username.includes("@") ? username : `${username}@siiafdp.cg`;
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user) return "Identifiant ou mot de passe incorrect.";
     const user = USERS.find((u) => u.username === username);
     if (!user) { await supabase.auth.signOut(); return "Compte non reconnu."; }
-    // Charger le rôle Supabase (principal / agent_gestion / agent_lecture)
-    try {
-      const profil = await chargerMonProfil();
-      if (profil) {
-        user.banqueRole = profil.role;
-        if (profil.compte_id) user.compteId = profil.compte_id;
+    // Charger le profil Supabase
+    let profil = null;
+    try { profil = await chargerMonProfil(); } catch (e) { console.error(e); }
+
+    // Si le user n'est pas dans USERS, c'est un agent — construire dynamiquement
+    if (!user && profil && profil.parent_id) {
+      const { data: parent } = await supabase
+        .from("profiles").select("compte_id, role").eq("id", profil.parent_id).single();
+      if (!parent) {
+        await supabase.auth.signOut();
+        return "Configuration parente introuvable.";
       }
-    } catch (e) { console.error("Profil non chargé :", e.message); }
+      const parentUser = USERS.find((u) => u.compteId === parent.compte_id);
+      if (!parentUser) {
+        await supabase.auth.signOut();
+        return "Compte parent inconnu.";
+      }
+      const isGestion = profil.role === "agent_gestion";
+      user = {
+        username: username,
+        nom: profil.nom_complet || username,
+        service: parentUser.service + " — " + (isGestion ? "Agent gestion" : "Lecture seule"),
+        views: isGestion
+          ? ["portefeuille", "securigage"]
+          : ["portefeuille"],
+        banque: parentUser.banque,
+        compteId: parent.compte_id,
+        banqueRole: profil.role,
+        isAgent: true,
+      };
+    }
+
+    if (!user) {
+      await supabase.auth.signOut();
+      return "Compte non reconnu.";
+    }
+
+    if (profil) {
+      user.banqueRole = profil.role;
+      if (profil.compte_id) user.compteId = profil.compte_id;
+    }
 
     setCurrentUser(user);
     setView(user.views[0]);
