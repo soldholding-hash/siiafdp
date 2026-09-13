@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from "react";
-import { loadAll, syncTable, supabase, chargerMonProfil } from "./lib/db";
+import { loadAll, syncTable, supabase, chargerMonProfil, chargerMonProfilParId } from "./lib/db";
 import Comptes from "./Comptes";
 import MonPortefeuille from "./MonPortefeuille";
 import MesAgents from "./MesAgents";
@@ -256,7 +256,7 @@ export default function SigefApp() {
     if (!user) { await supabase.auth.signOut(); return "Compte non reconnu."; }
     // Charger le profil Supabase
     let profil = null;
-    try { profil = await chargerMonProfil(); } catch (e) { console.error(e); }
+    try { profil = await chargerMonProfilParId(data.user.id); } catch (e) { console.error("Profil:", e); }
 
     // Si le user n'est pas dans USERS, c'est un agent — construire dynamiquement
     if (!user && profil && profil.parent_id) {

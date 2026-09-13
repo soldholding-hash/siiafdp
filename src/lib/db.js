@@ -67,3 +67,14 @@ export async function chargerMonProfil() {
   if (error) return null;
   return data;
 }
+
+export async function chargerMonProfilParId(userId) {
+  if (!userId) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("role, compte_id, nom_complet, parent_id")
+    .eq("id", userId)
+    .single();
+  if (error) { console.error("Erreur profil :", error.message); return null; }
+  return data;
+}
