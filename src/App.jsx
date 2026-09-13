@@ -252,8 +252,8 @@ export default function SigefApp() {
     const email = username.includes("@") ? username : `${username}@siiafdp.cg`;
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user) return "Identifiant ou mot de passe incorrect.";
-    const user = USERS.find((u) => u.username === username);
-    if (!user) { await supabase.auth.signOut(); return "Compte non reconnu."; }
+    let user = USERS.find((u) => u.username === username);
+
     // Charger le profil Supabase
     let profil = null;
     try { profil = await chargerMonProfilParId(data.user.id); } catch (e) { console.error("Profil:", e); }
