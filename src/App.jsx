@@ -288,7 +288,7 @@ export default function SigefApp() {
 
     if (!user) {
       await supabase.auth.signOut();
-      return "Compte non reconnu.";
+      return "Compte non reconnu. [DEBUG] auth_ok=" + (!!data.user) + " profil=" + (profil ? "oui" : "null") + " parent=" + (profil?.parent_id || "null");
     }
 
     if (profil) {
