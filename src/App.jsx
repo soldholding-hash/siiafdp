@@ -1007,7 +1007,7 @@ export default function SigefApp() {
           )}
 
           {view === "comptes" && <Comptes />}
-          {view === "dossiers_contentieux" && <Contentieux readOnly={currentUser.readOnly || currentUser.role !== "contentieux"} />}
+          {view === "dossiers_contentieux" && <Contentieux readOnly={currentUser.readOnly || currentUser.username !== "contentieux"} />}
           {view === "portefeuille" && currentUser.compteId && <MonPortefeuille compteId={currentUser.compteId} />}
           {view === "mes_agents" && <MesAgents />}
 
