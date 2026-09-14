@@ -260,8 +260,8 @@ export default function SigefApp() {
 
     // Si le user n'est pas dans USERS, c'est un agent — construire dynamiquement
     if (!user && profil && profil.parent_id) {
-      const { data: parent } = await supabase
-        .from("profiles").select("compte_id, role").eq("id", profil.parent_id).single();
+      const { data: parentData } = await supabase.rpc("get_mon_parent");
+      const parent = parentData && parentData[0];
       if (!parent) {
         await supabase.auth.signOut();
         return "Configuration parente introuvable.";
