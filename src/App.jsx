@@ -3,6 +3,7 @@ import { loadAll, syncTable, supabase, chargerMonProfil, chargerMonProfilParId }
 import Comptes from "./Comptes";
 import MonPortefeuille from "./MonPortefeuille";
 import MesAgents from "./MesAgents";
+import SignalementImpaye from "./SignalementImpaye";
 import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
@@ -3748,6 +3749,7 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
   const [nbConsultations, setNbConsultations] = useState(0);
   const [gagesDB, setGagesDB] = useState([]);
   const [alertes, setAlertes] = useState([]);
+  const [signalParcelle, setSignalParcelle] = useState(null);
 
   useEffect(() => {
     if (!compteId) return;
@@ -3898,6 +3900,17 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
             {msg.text}
           </div>
         )}
+
+        {signalParcelle && (
+          <SignalementImpaye
+            parcelle={{ id: signalParcelle.parcelle_id, proprietaire: parcelles.find((x) => x.id === signalParcelle.parcelle_id)?.proprietaire }}
+            onClose={() => setSignalParcelle(null)}
+            onDone={() => {
+              setSignalParcelle(null);
+              setMsg({ ok: true, text: "Signalement transmis au Ministère (Contentieux). Un dossier a été ouvert." });
+            }}
+          />
+        )}
       </div>
 
       <div className="bg-white border border-stone-200 rounded-sm p-5">
@@ -3922,7 +3935,10 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
                   <td className="text-stone-600">{new Date(g.date_pose).toLocaleDateString("fr-FR")}</td>
                   <td>
                     {!readOnly && (
-                      <button onClick={() => lever(g.parcelle_id)} className="text-xs text-emerald-700 hover:underline">Mainlevée</button>
+                      <div className="flex gap-3 justify-end">
+                        <button onClick={() => lever(g.parcelle_id)} className="text-xs text-emerald-700 hover:underline">Mainlevée</button>
+                        <button onClick={() => setSignalParcelle(g)} className="text-xs text-red-700 hover:underline">Signaler impayé</button>
+                      </div>
                     )}
                   </td>
                 </tr>
