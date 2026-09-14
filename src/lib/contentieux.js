@@ -59,3 +59,22 @@ export async function rendreJugement(contentieuxId, decision, reference, motivat
   if (error) throw error;
   return data;
 }
+
+export async function chargerMesContentieux(banqueId) {
+  const { data, error } = await supabase
+    .from("contentieux")
+    .select("*")
+    .eq("banque_id", banqueId)
+    .order("date_signalement", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function executerSaisie(contentieuxId, commentaire) {
+  const { data, error } = await supabase.rpc("executer_saisie", {
+    p_contentieux_id: contentieuxId,
+    p_commentaire: commentaire,
+  });
+  if (error) throw error;
+  return data;
+}
