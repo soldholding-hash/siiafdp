@@ -1,12 +1,13 @@
 import { supabase } from "./db";
 
-export async function poserGageSQL(parcelleId, banqueId, banqueNom, montant, dossierCredit) {
+export async function poserGageSQL(parcelleId, banqueId, banqueNom, montant, dossierCredit, dureeMois) {
   const { data, error } = await supabase.rpc("poser_gage", {
     p_parcelle_id: parcelleId,
     p_banque_id: banqueId,
     p_banque_nom: banqueNom,
     p_montant: Number(montant),
     p_dossier: dossierCredit,
+    p_duree_mois: Number(dureeMois) || 60,
   });
   if (error) throw error;
   return data;
