@@ -38,3 +38,24 @@ export async function instruireContentieux(contentieuxId, decision, commentaire)
   if (error) throw error;
   return data;
 }
+
+export async function chargerContentieuxTribunal() {
+  const { data, error } = await supabase
+    .from("contentieux")
+    .select("*")
+    .in("statut", ["transmis_tribunal", "juge", "clos"])
+    .order("date_transmission_tribunal", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function rendreJugement(contentieuxId, decision, reference, motivation) {
+  const { data, error } = await supabase.rpc("rendre_jugement", {
+    p_contentieux_id: contentieuxId,
+    p_decision: decision,
+    p_reference_jugement: reference,
+    p_motivation: motivation,
+  });
+  if (error) throw error;
+  return data;
+}
