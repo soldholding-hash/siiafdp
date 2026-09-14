@@ -19,3 +19,22 @@ export async function chargerMesContentieux(banqueId) {
   if (error) throw error;
   return data || [];
 }
+
+export async function chargerTousContentieux() {
+  const { data, error } = await supabase
+    .from("contentieux")
+    .select("*")
+    .order("date_signalement", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function instruireContentieux(contentieuxId, decision, commentaire) {
+  const { data, error } = await supabase.rpc("instruire_contentieux", {
+    p_contentieux_id: contentieuxId,
+    p_decision: decision,
+    p_commentaire: commentaire,
+  });
+  if (error) throw error;
+  return data;
+}

@@ -4,6 +4,7 @@ import Comptes from "./Comptes";
 import MonPortefeuille from "./MonPortefeuille";
 import MesAgents from "./MesAgents";
 import SignalementImpaye from "./SignalementImpaye";
+import Contentieux from "./Contentieux";
 import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
@@ -101,6 +102,7 @@ const NAV = [
   { id: "guichet", label: "Guichet unique", icon: Inbox },
   { id: "guichet_externe", label: "Guichet externe", icon: Building2 },
   { id: "workflow", label: "Workflow", icon: GitBranch },
+  { id: "dossiers_contentieux", label: "Dossiers contentieux", icon: Scale },
   { id: "tresor", label: "Trésor / Régie", icon: Banknote },
   { id: "comptes", label: "Comptes partenaires", icon: Wallet },
   { id: "portefeuille", label: "Mon portefeuille", icon: Wallet },
@@ -127,15 +129,15 @@ const USERS = [
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["domaine"] },
   { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
-  { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["workflow"] },
+  { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["dossiers_contentieux", "workflow"] },
   { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["tresor"] },
-  { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["audit"], readOnly: true },
+  { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["dossiers_contentieux", "audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["rh"] },
-  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["dashboard", "comptes", "audit", "rapports"] },
+  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
   { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
   { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
   { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
-  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
+  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
 function rectsOverlap(a, b) {
@@ -1005,6 +1007,7 @@ export default function SigefApp() {
           )}
 
           {view === "comptes" && <Comptes />}
+          {view === "dossiers_contentieux" && <Contentieux readOnly={currentUser.readOnly || currentUser.role !== "contentieux"} />}
           {view === "portefeuille" && currentUser.compteId && <MonPortefeuille compteId={currentUser.compteId} />}
           {view === "mes_agents" && <MesAgents />}
 
