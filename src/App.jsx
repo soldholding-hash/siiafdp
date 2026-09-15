@@ -219,7 +219,8 @@ export default function SigefApp() {
 
   // Chargement initial depuis Supabase (ou amorçage si la base est vide).
   useEffect(() => {
-    if (!currentUser?.tenantId) return;
+    if (!currentUser) return;
+    if (!currentUser.tenantId) { setDataReady(true); return; }
     const auditSeed = (() => {
       const raw = [
         { id: 1, ts: "22/08/2026 08:12", user: "R. Ondongo", action: "Délivrance du titre foncier pour la parcelle P-04131" },
