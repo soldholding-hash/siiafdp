@@ -5,18 +5,23 @@ import { supabase } from "./lib/db";
 
 function ModalAjout({ onClose, onDone }) {
   const [nom, setNom] = useState("");
-  const [email, setEmail] = useState("");
+  const [identifiant, setIdentifiant] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("agent_gestion");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
 
   async function valider() {
-    if (!nom || !email || !password) { setErr("Tous les champs sont obligatoires"); return; }
+    if (!nom || !identifiant || !password) { setErr("Tous les champs sont obligatoires"); return; }
+    if (!/^[a-z0-9._-]+$/.test(identifiant.toLowerCase())) {
+      setErr("Identifiant : lettres minuscules, chiffres, point, tiret ou underscore uniquement");
+      return;
+    }
     if (password.length < 6) { setErr("Mot de passe : 6 caractères minimum"); return; }
     setLoading(true);
     try {
-      const res = await creerAgent(email, password, nom, role);
+      const emailComplet = identifiant.toLowerCase().trim() + "@siiafdp.cg";
+      const res = await creerAgent(emailComplet, password, nom, role);
       if (!res.ok) { setErr("Erreur : " + res.raison); }
       else { onDone(); }
     } catch (e) { setErr(e.message); } finally { setLoading(false); }
@@ -36,10 +41,16 @@ function ModalAjout({ onClose, onDone }) {
               className="w-full border border-stone-300 rounded-sm px-3 py-2 text-sm" autoFocus />
           </div>
           <div>
-            <label className="text-xs font-mono text-stone-500 block mb-1">Email professionnel</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="agent@mucodec.cg"
-              className="w-full border border-stone-300 rounded-sm px-3 py-2 text-sm" />
+            <label className="text-xs font-mono text-stone-500 block mb-1">Identifiant de connexion</label>
+            <div className="flex">
+              <input value={identifiant} onChange={(e) => setIdentifiant(e.target.value)}
+                placeholder="jean.bakala"
+                className="flex-1 border border-stone-300 border-r-0 rounded-l-sm px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-amber-500" />
+              <span className="bg-stone-100 border border-stone-300 rounded-r-sm px-3 py-2 text-xs font-mono text-stone-600 flex items-center">@siiafdp.cg</span>
+            </div>
+            <div className="text-xs text-stone-400 mt-1">
+              L'agent se connectera avec : <span className="font-mono">{identifiant || "..."}@siiafdp.cg</span>
+            </div>
           </div>
           <div>
             <label className="text-xs font-mono text-stone-500 block mb-1">Mot de passe provisoire</label>
