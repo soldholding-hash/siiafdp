@@ -9,6 +9,7 @@ import Tribunal from "./Tribunal";
 import MesContentieux from "./MesContentieux";
 import VerifierCertificat from "./VerifierCertificat";
 import TableauDeBord from "./TableauDeBord";
+import VueCartographie from "./VueCartographie";
 import { genererCertificatGage } from "./lib/certificat";
 import { telechargerCertificat } from "./lib/pdfCertificat";
 import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
@@ -101,6 +102,7 @@ const STATUT_STYLE = {
 const NAV = [
   { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { id: "cadastre", label: "Cadastre / SIG", icon: Map },
+  { id: "cartographie", label: "Cartographie GPS", icon: MapPin },
   { id: "brigade_dashboard", label: "Pilotage Brigade", icon: Compass },
   { id: "titres", label: "Titres fonciers", icon: FileStack },
   { id: "cartes", label: "Cartes foncières", icon: CreditCard },
@@ -987,6 +989,8 @@ export default function SigefApp() {
               tensionData={tensionData}
             />
           )}
+
+          {view === "cartographie" && <VueCartographie parcelles={parcelles} />}
 
           {view === "cadastre" && (
             <Cadastre
