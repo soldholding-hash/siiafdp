@@ -3,6 +3,18 @@ import QRCode from "qrcode";
 
 export async function telechargerCertificat(data) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  // Charger le blason de la République du Congo
+  const blason = new Image();
+  blason.crossOrigin = "anonymous";
+  blason.src = "/blason-congo.png";
+  try {
+    await new Promise((resolve, reject) => {
+      blason.onload = resolve;
+      blason.onerror = reject;
+      setTimeout(reject, 3000);
+    });
+  } catch (e) { console.warn("Blason non chargé :", e.message); }
   const W = 210;
   const M = 20;
 
@@ -15,34 +27,39 @@ export async function telechargerCertificat(data) {
   doc.setLineWidth(0.3);
   doc.rect(13, 13, W - 26, 271);
 
-  // En-tête
+  // Blason en haut
+  if (blason.complete && blason.naturalWidth > 0) {
+    doc.addImage(blason, "PNG", W / 2 - 13, 15, 26, 26);
+  }
+
+  // En-tête (décalé vers le bas pour laisser de la place au blason)
   doc.setFont("times", "bold");
   doc.setFontSize(10);
   doc.setTextColor(120, 90, 20);
-  doc.text("RÉPUBLIQUE DU CONGO", W / 2, 25, { align: "center" });
+  doc.text("RÉPUBLIQUE DU CONGO", W / 2, 48, { align: "center" });
   doc.setFontSize(9);
-  doc.text("MINISTÈRE DES AFFAIRES FONCIÈRES ET DU DOMAINE PUBLIC", W / 2, 31, { align: "center" });
+  doc.text("MINISTÈRE DES AFFAIRES FONCIÈRES ET DU DOMAINE PUBLIC", W / 2, 53, { align: "center" });
   doc.setFontSize(8);
   doc.setTextColor(100, 100, 100);
-  doc.text("Système d'Information Intégré des Affaires Foncières et du Domaine Public", W / 2, 36, { align: "center" });
+  doc.text("Système d'Information Intégré des Affaires Foncières et du Domaine Public", W / 2, 58, { align: "center" });
 
   // Titre
   doc.setDrawColor(180, 130, 30);
   doc.setLineWidth(0.5);
-  doc.line(M + 30, 43, W - M - 30, 43);
+  doc.line(M + 30, 63, W - M - 30, 63);
 
   doc.setFont("times", "bold");
   doc.setFontSize(18);
   doc.setTextColor(20, 20, 20);
-  doc.text("CERTIFICAT DE GAGE FONCIER", W / 2, 55, { align: "center" });
+  doc.text("CERTIFICAT DE GAGE FONCIER", W / 2, 75, { align: "center" });
 
   doc.setFontSize(10);
   doc.setFont("times", "italic");
   doc.setTextColor(100, 100, 100);
-  doc.text(`Référence : ${data.reference}`, W / 2, 63, { align: "center" });
+  doc.text(`Référence : ${data.reference}`, W / 2, 83, { align: "center" });
 
   doc.setDrawColor(180, 130, 30);
-  doc.line(M + 30, 68, W - M - 30, 68);
+  doc.line(M + 30, 88, W - M - 30, 88);
 
   // Corps
   doc.setFont("times", "normal");
@@ -50,10 +67,10 @@ export async function telechargerCertificat(data) {
   doc.setTextColor(20, 20, 20);
   const intro = "Le Conservateur foncier de la République du Congo certifie, au vu du registre central numérique, les informations suivantes :";
   const introLines = doc.splitTextToSize(intro, W - 2 * M);
-  doc.text(introLines, M, 80);
+  doc.text(introLines, M, 100);
 
   // Tableau des infos
-  let y = 100;
+  let y = 120;
   const ligne = (label, valeur, bold = false) => {
     doc.setFont("times", "normal");
     doc.setFontSize(10);
