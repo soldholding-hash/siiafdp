@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigation, MapPin, Play, Square, RotateCcw, Check } from "lucide-react";
+import { Navigation, MapPin, Play, Square, RotateCcw, Check, Ruler } from "lucide-react";
 
 function calculerSurfaceM2(points) {
   if (points.length < 3) return 0;
@@ -18,7 +18,10 @@ function calculerSurfaceM2(points) {
   return Math.abs(area / 2);
 }
 
-export default function ModeTerrain({ onEnregistrer }) {
+// Lettres pour nommer les bornes : A, B, C...
+const lettre = (i) => String.fromCharCode(65 + (i % 26));
+
+export default function ModeTerrain({ onEnregistrer, onRetour }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markerMe = useRef(null);
@@ -28,10 +31,10 @@ export default function ModeTerrain({ onEnregistrer }) {
   const [position, setPosition] = useState(null);
   const [precision, setPrecision] = useState(null);
   const [bornes, setBornes] = useState([]);
+  const [distances, setDistances] = useState({});
   const [suivi, setSuivi] = useState(false);
   const [erreur, setErreur] = useState(null);
 
-  // Init carte (satellite par défaut)
   useEffect(() => {
     if (mapInstance.current || !mapRef.current) return;
     const L = window.L;
@@ -47,7 +50,6 @@ export default function ModeTerrain({ onEnregistrer }) {
     const plan = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap", maxZoom: 21,
     });
-
     satellite.addTo(map);
     L.control.layers({ "Satellite": satellite, "Plan": plan }, {}, { position: "topright", collapsed: true }).addTo(map);
 
@@ -56,22 +58,16 @@ export default function ModeTerrain({ onEnregistrer }) {
   }, []);
 
   function demarrer() {
-    if (!navigator.geolocation) {
-      setErreur("GPS non disponible sur cet appareil");
-      return;
-    }
+    if (!navigator.geolocation) { setErreur("GPS non disponible"); return; }
     setErreur(null);
     setSuivi(true);
-
     watchRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const p = [pos.coords.latitude, pos.coords.longitude];
         setPosition(p);
         setPrecision(pos.coords.accuracy);
-
         const L = window.L;
         if (!mapInstance.current) return;
-
         if (markerMe.current) {
           markerMe.current.setLatLng(p);
         } else {
@@ -83,11 +79,7 @@ export default function ModeTerrain({ onEnregistrer }) {
         mapInstance.current.setView(p, 19);
       },
       (err) => {
-        const msgs = {
-          1: "Permission refusée — autorisez la localisation dans Chrome",
-          2: "Position indisponible (GPS faible)",
-          3: "Délai dépassé — réessayez",
-        };
+        const msgs = { 1: "Permission refusée", 2: "Position indisponible", 3: "Délai dépassé" };
         setErreur("Erreur GPS : " + (msgs[err.code] || err.message));
         setSuivi(false);
       },
@@ -107,46 +99,113 @@ export default function ModeTerrain({ onEnregistrer }) {
     return () => { if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current); };
   }, []);
 
-  function enregistrerBorne() {
-    if (!position) { alert("Attendez d'avoir une position GPS valide"); return; }
-    const nouvelle = [...bornes, position];
-    setBornes(nouvelle);
-
+  // Redessiner les bornes, les lignes, et les étiquettes des distances
+  useEffect(() => {
     const L = window.L;
-    L.circleMarker(position, {
-      radius: 6, color: "#7c3aed", weight: 3,
-      fillColor: "#a78bfa", fillOpacity: 1,
-    }).bindTooltip(`Borne ${nouvelle.length}`).addTo(mapInstance.current);
-
+    if (!L || !mapInstance.current) return;
     layersRef.current.forEach((l) => l.remove());
     layersRef.current = [];
-    if (nouvelle.length >= 3) {
-      const poly = L.polygon(nouvelle, {
-        color: "#7c3aed", weight: 3, fillColor: "#a78bfa", fillOpacity: 0.3,
+
+    bornes.forEach((p, i) => {
+      const m = L.circleMarker(p, {
+        radius: 6, color: "#7c3aed", weight: 3,
+        fillColor: "#a78bfa", fillOpacity: 1,
+      }).bindTooltip(`Borne ${lettre(i)}`).addTo(mapInstance.current);
+      layersRef.current.push(m);
+    });
+
+    // Lignes entre bornes
+    for (let i = 0; i < bornes.length - 1; i++) {
+      const cle = `${i}-${i + 1}`;
+      const dist = distances[cle];
+      const label = dist ? ` ${dist} m ` : "?";
+      const line = L.polyline([bornes[i], bornes[i + 1]], {
+        color: "#7c3aed", weight: 3,
+      }).addTo(mapInstance.current);
+      layersRef.current.push(line);
+
+      // Étiquette au milieu du segment
+      const mid = [
+        (bornes[i][0] + bornes[i + 1][0]) / 2,
+        (bornes[i][1] + bornes[i + 1][1]) / 2,
+      ];
+      const txt = L.marker(mid, {
+        icon: L.divIcon({
+          className: "dist-label",
+          html: `<div style="background:#7c3aed;color:white;padding:2px 6px;border-radius:3px;font-size:11px;font-weight:600;white-space:nowrap;">${label}</div>`,
+          iconAnchor: [20, 10],
+        }),
+      }).addTo(mapInstance.current);
+      layersRef.current.push(txt);
+    }
+
+    // Polygone fermé
+    if (bornes.length >= 3) {
+      const poly = L.polygon(bornes, {
+        color: "#7c3aed", weight: 2, fillColor: "#a78bfa", fillOpacity: 0.25,
       }).addTo(mapInstance.current);
       layersRef.current.push(poly);
     }
+  }, [bornes, distances]);
+
+  function enregistrerBorne() {
+    if (!position) { alert("Attendez d'avoir une position GPS valide"); return; }
+    setBornes([...bornes, position]);
   }
 
   function annulerDerniere() {
     if (bornes.length === 0) return;
     if (!confirm("Annuler la dernière borne ?")) return;
-    setBornes(bornes.slice(0, -1));
+    const nouvelles = bornes.slice(0, -1);
+    // Nettoyer les distances liées
+    const cle = `${nouvelles.length - 1}-${nouvelles.length}`;
+    const d = { ...distances };
+    delete d[cle];
+    setDistances(d);
+    setBornes(nouvelles);
   }
 
   function effacerTout() {
     if (!confirm("Effacer toutes les bornes ?")) return;
     setBornes([]);
+    setDistances({});
   }
 
-  const surface = calculerSurfaceM2(bornes);
-  const precM = precision ? Math.round(precision) : null;
+  function setDistance(cle, valeur) {
+    setDistances({ ...distances, [cle]: valeur });
+  }
+
+  // Le polygone est "complet" si toutes les distances sont remplies
+  const nbSegments = bornes.length >= 3 ? bornes.length : Math.max(0, bornes.length - 1);
+  const distancesRemplies = Object.keys(distances).filter((k) => distances[k]).length;
+  const complet = nbSegments > 0 && distancesRemplies >= nbSegments;
+  const surfaceGPS = calculerSurfaceM2(bornes);
+
+  const surfaceMano = (() => {
+    // Surface calculée à partir des distances saisies (approximation pour polygone fermé simple)
+    // On utilise la formule de Bretschneider pour quad, sinon on garde surfaceGPS
+    if (bornes.length === 4 && complet) {
+      const a = parseFloat(distances["0-1"]) || 0;
+      const b = parseFloat(distances["1-2"]) || 0;
+      const c = parseFloat(distances["2-3"]) || 0;
+      const d = parseFloat(distances["3-0"]) || 0;
+      // Approximation : polygone presque rectangle
+      const s = (a + b + c + d) / 2;
+      return Math.sqrt((s - a) * (s - b) * (s - c) * (s - d));
+    }
+    return surfaceGPS;
+  })();
 
   return (
     <div className="flex flex-col h-screen bg-stone-100">
       {/* En-tête */}
       <div className="bg-stone-900 text-white px-4 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
+          {onRetour && (
+            <button onClick={onRetour} className="text-stone-300 hover:text-white p-1 -ml-1" title="Retour">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+          )}
           <Navigation className="text-purple-400" size={16} />
           <div className="text-sm font-semibold">Mode Terrain</div>
         </div>
@@ -155,39 +214,33 @@ export default function ModeTerrain({ onEnregistrer }) {
         </div>
       </div>
 
-      {/* Bandeau précision */}
       {(position || erreur) && (
         <div className={"text-xs px-4 py-1.5 flex justify-between shrink-0 " + (erreur ? "bg-red-900 text-red-100" : "bg-stone-800 text-stone-300")}>
-          {erreur ? (
-            <span>{erreur}</span>
-          ) : (
+          {erreur ? <span>{erreur}</span> : (
             <>
-              <span>Précision : {precM !== null ? `± ${precM} m` : "—"}</span>
+              <span>Précision : {precision ? `± ${Math.round(precision)} m` : "—"}</span>
               <span>{suivi ? "🟢 Suivi actif" : "🔴 Arrêté"}</span>
             </>
           )}
         </div>
       )}
 
-      {/* Carte — 55% de la hauteur */}
-      <div className="relative shrink-0" style={{ height: "55vh" }}>
+      {/* Carte — 45% */}
+      <div className="relative shrink-0" style={{ height: "45vh" }}>
         <div ref={mapRef} className="absolute inset-0" style={{ zIndex: 0 }}></div>
-
-        {/* Compteur flottant */}
         <div className="absolute top-3 left-3 bg-white rounded-sm shadow-md px-3 py-2 z-[400] text-xs">
           <div className="font-semibold text-stone-800">{bornes.length} borne{bornes.length > 1 ? "s" : ""}</div>
-          {bornes.length >= 3 && (
+          {complet && (
             <div className="text-purple-700 font-mono">
-              {Math.round(surface).toLocaleString("fr-FR")} m²
+              ~{Math.round(surfaceMano).toLocaleString("fr-FR")} m²
             </div>
           )}
         </div>
       </div>
 
-      {/* Panneau de contrôle — scrollable */}
+      {/* Panneau de contrôle — 55% */}
       <div className="flex-1 bg-white border-t border-stone-200 overflow-y-auto">
         <div className="p-3 space-y-2">
-          {/* GPS */}
           {!suivi ? (
             <button onClick={demarrer}
               className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm py-3 rounded-sm font-medium">
@@ -200,17 +253,53 @@ export default function ModeTerrain({ onEnregistrer }) {
             </button>
           )}
 
-          {/* Enregistrer borne */}
           <button onClick={enregistrerBorne} disabled={!position || !suivi}
             className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-base py-4 rounded-sm font-semibold">
-            <MapPin size={20} /> ENREGISTRER UNE BORNE
+            <MapPin size={20} /> ENREGISTRER BORNE {lettre(bornes.length)}
           </button>
 
-          {/* Secondaires */}
+          {/* Tableau des segments à mesurer */}
+          {bornes.length >= 2 && (
+            <div className="bg-purple-50 border border-purple-200 rounded-sm p-3 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-purple-900">
+                <Ruler size={14} />
+                Distances mesurées (mètre ruban)
+              </div>
+              <div className="space-y-1.5">
+                {Array.from({ length: bornes.length >= 3 ? bornes.length : bornes.length - 1 }).map((_, i) => {
+                  const cle = `${i}-${(i + 1) % bornes.length}`;
+                  const estFermeture = i === bornes.length - 1;
+                  return (
+                    <div key={cle} className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-purple-800 w-20">
+                        {lettre(i)} → {lettre((i + 1) % bornes.length)}
+                        {estFermeture ? " 🔒" : ""}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="0"
+                        value={distances[cle] || ""}
+                        onChange={(e) => setDistance(cle, e.target.value)}
+                        className="flex-1 border border-purple-300 rounded-sm px-2 py-1 text-xs font-mono"
+                      />
+                      <span className="text-xs text-purple-700">m</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {!complet && (
+                <div className="text-[11px] text-amber-700">
+                  Remplissez toutes les distances pour fermer le polygone
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex gap-2">
             <button onClick={annulerDerniere} disabled={bornes.length === 0}
               className="flex-1 flex items-center justify-center gap-1 text-xs py-2 border border-stone-300 text-stone-700 rounded-sm disabled:opacity-40">
-              <RotateCcw size={12} /> Annuler
+              <RotateCcw size={12} /> Annuler dernière
             </button>
             <button onClick={effacerTout} disabled={bornes.length === 0}
               className="flex-1 text-xs py-2 border border-red-300 text-red-700 rounded-sm disabled:opacity-40">
@@ -218,29 +307,10 @@ export default function ModeTerrain({ onEnregistrer }) {
             </button>
           </div>
 
-          {/* Info bornes */}
-          {bornes.length > 0 && (
-            <div className="bg-purple-50 border border-purple-200 rounded-sm p-3">
-              <div className="text-xs text-purple-900 font-medium">
-                {bornes.length} borne{bornes.length > 1 ? "s" : ""} enregistrée{bornes.length > 1 ? "s" : ""}
-              </div>
-              {bornes.length >= 3 ? (
-                <div className="text-xs text-purple-700 mt-1">
-                  Surface calculée : <strong>{Math.round(surface).toLocaleString("fr-FR")} m²</strong>
-                </div>
-              ) : (
-                <div className="text-xs text-amber-700 mt-1">
-                  Il faut au moins 3 bornes pour fermer le polygone
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Valider */}
-          {bornes.length >= 3 && (
-            <button onClick={() => onEnregistrer && onEnregistrer({ bornes, surface })}
+          {complet && (
+            <button onClick={() => onEnregistrer && onEnregistrer({ bornes, distances, surface: surfaceMano })}
               className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm py-3 rounded-sm font-semibold">
-              <Check size={16} /> Valider la parcelle ({bornes.length} bornes, {Math.round(surface).toLocaleString("fr-FR")} m²)
+              <Check size={16} /> Valider la parcelle ({bornes.length} bornes, ~{Math.round(surfaceMano).toLocaleString("fr-FR")} m²)
             </button>
           )}
         </div>
