@@ -7,12 +7,15 @@ import SignalementImpaye from "./SignalementImpaye";
 import Contentieux from "./Contentieux";
 import Tribunal from "./Tribunal";
 import MesContentieux from "./MesContentieux";
+import VerifierCertificat from "./VerifierCertificat";
+import { genererCertificatGage } from "./lib/certificat";
+import { telechargerCertificat } from "./lib/pdfCertificat";
 import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
 import {
   LayoutDashboard, Map, FileStack, Inbox, GitBranch, ShieldCheck,
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
   ChevronRight, X, Landmark, Banknote, Building2, QrCode, Bell, Eye,
-  CreditCard, Lock, Send, ArrowLeftRight, Globe, Layers, MapPin, ArrowLeft, Gavel,
+  CreditCard, Lock, Send, ArrowLeftRight, Globe, Layers, MapPin, ArrowLeft, Gavel, Download,
   Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet
 } from "lucide-react";
 import {
@@ -171,6 +174,15 @@ function blocageMutation(bien) {
 }
 
 export default function SigefApp() {
+  // ============ ROUTE PUBLIQUE /verifier/:code ============
+  // Détection AVANT tous les hooks pour respecter les règles React
+  const verifMatch = typeof window !== "undefined"
+    ? window.location.pathname.match(/^\/verifier\/([A-Z0-9]+)/i)
+    : null;
+  if (verifMatch) {
+    return <VerifierCertificat codeInitial={verifMatch[1].toUpperCase()} BlasonCongo={BlasonCongo} />;
+  }
+
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null);
   const [parcelles, setParcelles] = useState([]);
@@ -3947,6 +3959,13 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
                       <div className="flex gap-3 justify-end">
                         <button onClick={() => lever(g.parcelle_id)} className="text-xs text-emerald-700 hover:underline">Mainlevée</button>
                         <button onClick={() => setSignalParcelle(g)} className="text-xs text-red-700 hover:underline">Signaler impayé</button>
+                        <button onClick={async () => {
+                          try {
+                            const data = await genererCertificatGage(g.id);
+                            if (data.ok) await telechargerCertificat(data);
+                            else setMsg({ ok: false, text: "Erreur : " + data.raison });
+                          } catch (e) { setMsg({ ok: false, text: "Erreur PDF : " + e.message }); }
+                        }} className="text-xs text-blue-700 hover:underline">Certificat PDF</button>
                       </div>
                     )}
                   </td>
