@@ -22,7 +22,8 @@ export async function loadAll(seeds, tenantId) {
       continue;
     }
     let query = supabase.from(table).select("id, data");
-    if (tenantId) query = query.eq("tenant_id", tenantId);
+    // Les parcelles sont en lecture partagée (registre central État)
+    if (tenantId && table !== "parcelles") query = query.eq("tenant_id", tenantId);
     const { data, error } = await query;
     if (error) {
       console.error(`Erreur de chargement (${table}) :`, error.message);
