@@ -21,7 +21,7 @@ function normaliserPolygone(bornes) {
 }
 
 export function telechargerPlanBornage(parcelle) {
-  const data = parcelle.data || {};
+  const data = parcelle.data || parcelle || {};
   const bornes = data.polygone || [];
   const distances = data.distances || {};
   const surface = data.surface_m2 || data.superficie || 0;
