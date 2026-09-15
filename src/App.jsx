@@ -890,6 +890,10 @@ export default function SigefApp() {
 
   
 
+  if (view === "mode_terrain") {
+    return <ModeTerrain />;
+  }
+
   return (
     <div className="flex h-screen w-full bg-stone-100 text-stone-900" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>
       {/* Sidebar */}
