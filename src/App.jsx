@@ -8,6 +8,7 @@ import Contentieux from "./Contentieux";
 import Tribunal from "./Tribunal";
 import MesContentieux from "./MesContentieux";
 import VerifierCertificat from "./VerifierCertificat";
+import TableauDeBord from "./TableauDeBord";
 import { genererCertificatGage } from "./lib/certificat";
 import { telechargerCertificat } from "./lib/pdfCertificat";
 import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
@@ -110,6 +111,7 @@ const NAV = [
   { id: "dossiers_contentieux", label: "Dossiers contentieux", icon: Scale },
   { id: "dossiers_tribunal", label: "Dossiers au Tribunal", icon: Gavel },
   { id: "mes_contentieux", label: "Mes dossiers contentieux", icon: Scale },
+  { id: "tableau_bord", label: "Tableau de bord", icon: BarChart3 },
   { id: "tresor", label: "Trésor / Régie", icon: Banknote },
   { id: "comptes", label: "Comptes partenaires", icon: Wallet },
   { id: "portefeuille", label: "Mon portefeuille", icon: Wallet },
@@ -141,8 +143,8 @@ const USERS = [
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["dossiers_contentieux", "audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["rh"] },
   { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
-  { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
-  { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
+  { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
+  { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
   { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
   { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
@@ -1033,6 +1035,7 @@ export default function SigefApp() {
           {view === "dossiers_contentieux" && <Contentieux readOnly={currentUser.readOnly || currentUser.username !== "contentieux"} />}
           {view === "dossiers_tribunal" && <Tribunal />}
           {view === "mes_contentieux" && currentUser.compteId && <MesContentieux compteId={currentUser.compteId} />}
+          {view === "tableau_bord" && currentUser.compteId && <TableauDeBord compteId={currentUser.compteId} nomBanque={currentUser.banque || currentUser.service} />}
           {view === "portefeuille" && currentUser.compteId && <MonPortefeuille compteId={currentUser.compteId} />}
           {view === "mes_agents" && <MesAgents />}
 
