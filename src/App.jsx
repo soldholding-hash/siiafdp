@@ -11,6 +11,7 @@ import VerifierCertificat from "./VerifierCertificat";
 import TableauDeBord from "./TableauDeBord";
 import VueCartographie from "./VueCartographie";
 import ModeTerrain from "./ModeTerrain";
+import { creerParcelleTerrain } from "./lib/terrain";
 import { genererCertificatGage } from "./lib/certificat";
 import { telechargerCertificat } from "./lib/pdfCertificat";
 import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
@@ -336,6 +337,34 @@ export default function SigefApp() {
     setView(user.views[0]);
     setAudit((a) => [{ id: a.length + 1, ts: nowStamp(), user: user.nom, action: `Connexion au système (service : ${user.service})` }, ...a]);
     return null;
+  }
+
+  async function handleEnregistrerTerrain({ bornes, distances, surface }) {
+    try {
+      const res = await creerParcelleTerrain(bornes, distances, surface, "À préciser");
+      if (!res.ok) {
+        alert("Erreur : " + res.raison);
+        return;
+      }
+      alert("Parcelle " + res.parcelle_id + " créée avec succès (" + res.surface_m2.toFixed(0) + " m²)");
+      // Recharger depuis la base
+      const data = await loadAll({
+        parcelles: INITIAL_PARCELLES,
+        cartes: INITIAL_CARTES,
+        dossiers: INITIAL_DOSSIERS,
+        baux: INITIAL_BAUX,
+        encaissements: INITIAL_ENCAISSEMENTS,
+        audit: audit,
+      }, currentUser.tenantId);
+      setParcelles(data.parcelles);
+      setView("cartographie");
+    } catch (e) {
+      alert("Erreur : " + e.message);
+    }
+  }
+
+  function handleRetourTerrain() {
+    setView("cartographie");
   }
 
   function handleLogout() {
@@ -891,7 +920,7 @@ export default function SigefApp() {
   
 
   if (view === "mode_terrain") {
-    return <ModeTerrain />;
+    return <ModeTerrain onEnregistrer={handleEnregistrerTerrain} onRetour={handleRetourTerrain} />;
   }
 
   return (
@@ -997,7 +1026,7 @@ export default function SigefApp() {
           )}
 
           {view === "cartographie" && <VueCartographie parcelles={parcelles} />}
-          {view === "mode_terrain" && <ModeTerrain />}
+          {view === "mode_terrain" && <ModeTerrain onEnregistrer={handleEnregistrerTerrain} onRetour={handleRetourTerrain} />}
 
           {view === "cadastre" && (
             <Cadastre
