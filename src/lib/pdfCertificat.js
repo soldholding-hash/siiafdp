@@ -98,7 +98,7 @@ export async function telechargerCertificat(data) {
   y += 8;
 
   doc.setFont("times", "italic");
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(60, 60, 60);
   const mention = "Ce certificat atteste que la parcelle désignée ci-dessus est grevée d'un gage foncier au profit de l'institution mentionnée. Il peut être vérifié à tout moment par tout tiers via le code de vérification ci-dessous. Toute modification ultérieure du statut du bien est notifiée automatiquement.";
   const mentionLines = doc.splitTextToSize(mention, W - 2 * M);
@@ -107,34 +107,34 @@ export async function telechargerCertificat(data) {
   // QR code
   try {
     const qrDataUrl = await QRCode.toDataURL(data.url, { width: 200, margin: 1 });
-    doc.addImage(qrDataUrl, "PNG", M, 210, 45, 45);
+    doc.addImage(qrDataUrl, "PNG", M, 215, 40, 40);
   } catch (e) { console.error("QR:", e); }
 
   // Bloc code + hash
   doc.setFont("times", "normal");
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  doc.text("CODE DE VÉRIFICATION", M + 55, 218);
+  doc.text("CODE DE VÉRIFICATION", M + 50, 222);
   doc.setFont("courier", "bold");
   doc.setFontSize(16);
   doc.setTextColor(20, 20, 20);
-  doc.text(data.code, M + 55, 228);
+  doc.text(data.code, M + 50, 232);
 
   doc.setFont("times", "normal");
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  doc.text("SIGNATURE CRYPTOGRAPHIQUE (SHA-256)", M + 55, 240);
+  doc.text("SIGNATURE CRYPTOGRAPHIQUE (SHA-256)", M + 50, 244);
 
   doc.setFont("courier", "normal");
   doc.setFontSize(6);
   doc.setTextColor(60, 60, 60);
   const hashLines = doc.splitTextToSize(data.hash, W - M - 60 - M);
-  doc.text(hashLines, M + 55, 246);
+  doc.text(hashLines, M + 50, 250);
 
   doc.setFontSize(8);
   doc.setFont("times", "italic");
   doc.setTextColor(100, 100, 100);
-  doc.text("Scannez le QR code pour vérifier l'authenticité en ligne.", M + 55, 260);
+  doc.text("Scannez le QR code pour vérifier l'authenticité en ligne.", M + 50, 262);
 
   // Pied de page
   doc.setDrawColor(180, 130, 30);
