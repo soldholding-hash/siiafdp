@@ -857,6 +857,10 @@ export default function SigefApp() {
 
   const PIE_COLORS = { titre: "#059669", litige: "#dc2626", domaine: "#d97706", libre: "#78716c", gage: "#7c3aed", gel_judiciaire: "#4338ca" };
 
+  if (!currentUser) {
+    return <LoginScreen onLogin={handleLogin} onCardLogin={handleCardLogin} citizenError={citizenError} parcelles={parcelles} cartes={cartes} />;
+  }
+
   if (!dataReady) {
     return (
       <div className="min-h-screen w-full bg-stone-900 flex items-center justify-center">
@@ -880,9 +884,7 @@ export default function SigefApp() {
     );
   }
 
-  if (!currentUser) {
-    return <LoginScreen onLogin={handleLogin} onCardLogin={handleCardLogin} citizenError={citizenError} parcelles={parcelles} cartes={cartes} />;
-  }
+  
 
   return (
     <div className="flex h-screen w-full bg-stone-100 text-stone-900" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>
