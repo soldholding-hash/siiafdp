@@ -1,6 +1,6 @@
 import { supabase } from "./db";
 
-export async function poserGageSQL(parcelleId, banqueId, banqueNom, montant, dossierCredit, dureeMois) {
+export async function poserGageSQL(parcelleId, banqueId, banqueNom, montant, dossierCredit, dureeMois, zone) {
   const { data, error } = await supabase.rpc("poser_gage", {
     p_parcelle_id: parcelleId,
     p_banque_id: banqueId,
@@ -8,6 +8,7 @@ export async function poserGageSQL(parcelleId, banqueId, banqueNom, montant, dos
     p_montant: Number(montant),
     p_dossier: dossierCredit,
     p_duree_mois: Number(dureeMois) || 60,
+    p_zone: zone,
   });
   if (error) throw error;
   return data;
@@ -86,6 +87,17 @@ export async function realiserGageSQL(parcelleId, banqueId, motif) {
 
 export async function chargerAlertesEcheance() {
   const { data, error } = await supabase.rpc("notifier_echeances");
+  if (error) throw error;
+  return data || [];
+}
+
+
+export async function chargerTribunaux() {
+  const { data, error } = await supabase
+    .from("tribunaux")
+    .select("id, nom, ville, departement")
+    .eq("actif", true)
+    .order("ville");
   if (error) throw error;
   return data || [];
 }

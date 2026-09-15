@@ -539,7 +539,7 @@ export default function SigefApp() {
     if (compteId) {
       try {
         const dureeMois = Number(form.dureeAns) * 12 || 60;
-        const res = await poserGageSQL(parcelleId, compteId, banque, form.montant, form.dossierCredit, dureeMois);
+        const res = await poserGageSQL(parcelleId, compteId, banque, form.montant, form.dossierCredit, dureeMois, form.zone);
         if (!res.ok) {
           const m = res.raison === "double_gage"
             ? `Ce bien est déjà grevé au profit de ${res.banque}. Enregistrement impossible.`
@@ -4012,7 +4012,7 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
 
 function FicheBienBancaire({ parcelle: p, banque, readOnly, onPoserGage, onLeverGage }) {
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ dossierCredit: "", montant: "", dureeAns: "5" });
+  const [form, setForm] = useState({ dossierCredit: "", montant: "", dureeAns: "5", zone: "" });
   const [err, setErr] = useState(null);
 
   const disponible = p.statut === "titre";
@@ -4046,9 +4046,25 @@ function FicheBienBancaire({ parcelle: p, banque, readOnly, onPoserGage, onLever
             <Field label="Montant (FCFA)"><input type="number" className="w-full border border-stone-300 rounded-sm px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500" value={form.montant} onChange={(e) => setForm({ ...form, montant: e.target.value })} /></Field>
             <Field label="Durée (années)"><input type="number" className="w-full border border-stone-300 rounded-sm px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500" value={form.dureeAns} onChange={(e) => setForm({ ...form, dureeAns: e.target.value })} /></Field>
           </div>
+          <Field label="Zone géographique (tribunal compétent)">
+            <select value={form.zone} onChange={(e) => setForm({ ...form, zone: e.target.value })}
+              className="w-full border border-stone-300 rounded-sm px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+              <option value="">— Sélectionner la zone —</option>
+              <option value="Brazzaville">Brazzaville — TGI Brazzaville</option>
+              <option value="Pointe-Noire">Pointe-Noire — TGI Pointe-Noire</option>
+              <option value="Dolisie">Dolisie — TGI Dolisie</option>
+              <option value="Nkayi">Nkayi — TGI Nkayi</option>
+              <option value="Owando">Owando — TGI Owando</option>
+            </select>
+          </Field>
+          {form.zone && (
+            <div className="text-xs text-purple-700 bg-purple-50 border border-purple-200 rounded-sm p-2">
+              Tribunal compétent en cas de contentieux : <strong>TGI {form.zone}</strong>
+            </div>
+          )}
           {err && <div className="text-xs text-red-700">{err}</div>}
           <div className="flex gap-2">
-            <button onClick={submitGage} disabled={!form.dossierCredit || !form.montant} className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:opacity-40 text-white text-xs py-2 rounded-sm">Valider le gage</button>
+            <button onClick={submitGage} disabled={!form.dossierCredit || !form.montant || !form.zone} className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:opacity-40 text-white text-xs py-2 rounded-sm">Valider le gage</button>
             <button onClick={() => setShowForm(false)} className="text-xs text-stone-500 px-2">Annuler</button>
           </div>
         </div>
