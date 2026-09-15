@@ -135,20 +135,20 @@ const NAV = [
 // saisie opérationnelle des autres services.
 
 const USERS = [
-  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["brigade_dashboard", "cadastre"] },
-  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["titres", "cartes"] },
-  { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["domaine"] },
+  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["cartographie", "brigade_dashboard", "cadastre"] },
+  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["cartographie", "titres", "cartes"] },
+  { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["cartographie", "domaine"] },
   { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
   { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["dossiers_contentieux", "workflow"] },
   { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["tresor"] },
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["dossiers_contentieux", "audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["rh"] },
-  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
+  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
   { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
   { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
   { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
-  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
+  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
 function rectsOverlap(a, b) {
