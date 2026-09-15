@@ -106,7 +106,8 @@ export async function telechargerCertificat(data) {
 
   // QR code
   try {
-    const qrDataUrl = await QRCode.toDataURL(data.url, { width: 200, margin: 1 });
+    const urlQR = "https://siiafdp.onrender.com/?verif=" + data.code;
+    const qrDataUrl = await QRCode.toDataURL(urlQR, { width: 200, margin: 1 });
     doc.addImage(qrDataUrl, "PNG", M, 215, 40, 40);
   } catch (e) { console.error("QR:", e); }
 
