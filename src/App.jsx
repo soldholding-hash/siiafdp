@@ -339,9 +339,9 @@ export default function SigefApp() {
     return null;
   }
 
-  async function handleEnregistrerTerrain({ bornes, distances, surface }) {
+  async function handleEnregistrerTerrain({ bornes, distances, surface, arrondissement }) {
     try {
-      const res = await creerParcelleTerrain(bornes, distances, surface, "À préciser");
+      const res = await creerParcelleTerrain(bornes, distances, surface, arrondissement || "Non défini");
       if (!res.ok) {
         alert("Erreur : " + res.raison);
         return;
