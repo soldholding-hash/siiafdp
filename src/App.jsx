@@ -182,6 +182,13 @@ export default function SigefApp() {
   if (verifMatch) {
     return <VerifierCertificat codeInitial={verifMatch[1].toUpperCase()} BlasonCongo={BlasonCongo} />;
   }
+  // Variante query string : ?verif=CODE
+  const verifQuery = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("verif")
+    : null;
+  if (verifQuery) {
+    return <VerifierCertificat codeInitial={verifQuery.toUpperCase()} BlasonCongo={BlasonCongo} />;
+  }
 
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null);
