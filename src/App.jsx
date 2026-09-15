@@ -219,6 +219,7 @@ export default function SigefApp() {
 
   // Chargement initial depuis Supabase (ou amorçage si la base est vide).
   useEffect(() => {
+    if (!currentUser?.tenantId) return;
     const auditSeed = (() => {
       const raw = [
         { id: 1, ts: "22/08/2026 08:12", user: "R. Ondongo", action: "Délivrance du titre foncier pour la parcelle P-04131" },
@@ -242,7 +243,7 @@ export default function SigefApp() {
       baux: INITIAL_BAUX,
       encaissements: INITIAL_ENCAISSEMENTS,
       audit: auditSeed,
-    }).then((data) => {
+    }, currentUser.tenantId).then((data) => {
       setParcelles(data.parcelles);
       setCartes(data.cartes);
       setDossiers(data.dossiers);
@@ -252,16 +253,16 @@ export default function SigefApp() {
       hydrated.current = true;
       setDataReady(true);
     });
-  }, []);
+  }, [currentUser?.tenantId]);
 
   // Synchronisation automatique : toute modification de ces collections
   // est répercutée vers Supabase, best-effort, sans bloquer l'interface.
-  useEffect(() => { if (hydrated.current) syncTable("parcelles", parcelles); }, [parcelles]);
-  useEffect(() => { if (hydrated.current) syncTable("cartes", cartes); }, [cartes]);
-  useEffect(() => { if (hydrated.current) syncTable("dossiers", dossiers); }, [dossiers]);
-  useEffect(() => { if (hydrated.current) syncTable("baux", baux); }, [baux]);
-  useEffect(() => { if (hydrated.current) syncTable("encaissements", encaissements); }, [encaissements]);
-  useEffect(() => { if (hydrated.current) syncTable("audit", audit); }, [audit]);
+  useEffect(() => { if (hydrated.current && currentUser?.tenantId) syncTable("parcelles", parcelles, currentUser.tenantId); }, [parcelles, currentUser?.tenantId]);
+  useEffect(() => { if (hydrated.current && currentUser?.tenantId) syncTable("cartes", cartes, currentUser.tenantId); }, [cartes, currentUser?.tenantId]);
+  useEffect(() => { if (hydrated.current && currentUser?.tenantId) syncTable("dossiers", dossiers, currentUser.tenantId); }, [dossiers, currentUser?.tenantId]);
+  useEffect(() => { if (hydrated.current && currentUser?.tenantId) syncTable("baux", baux, currentUser.tenantId); }, [baux, currentUser?.tenantId]);
+  useEffect(() => { if (hydrated.current && currentUser?.tenantId) syncTable("encaissements", encaissements, currentUser.tenantId); }, [encaissements, currentUser?.tenantId]);
+  useEffect(() => { if (hydrated.current && currentUser?.tenantId) syncTable("audit", audit, currentUser.tenantId); }, [audit, currentUser?.tenantId]);
 
   function notify(destinataire, message, canal = "SMS") {
     setNotifications((n) => [{ id: n.length + 1, ts: nowStamp(), destinataire, canal, message }, ...n]);
@@ -310,6 +311,7 @@ export default function SigefApp() {
         banque: parentUser.banque,
         compteId: parent.compte_id,
         banqueRole: profil.role,
+        tenantId: profil.tenant_id,
         isAgent: true,
       };
     }
@@ -322,6 +324,7 @@ export default function SigefApp() {
     if (profil) {
       user.banqueRole = profil.role;
       if (profil.compte_id) user.compteId = profil.compte_id;
+      if (profil.tenant_id) user.tenantId = profil.tenant_id;
     }
 
     setCurrentUser(user);
