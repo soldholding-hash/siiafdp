@@ -10,6 +10,7 @@ import MesContentieux from "./MesContentieux";
 import VerifierCertificat from "./VerifierCertificat";
 import TableauDeBord from "./TableauDeBord";
 import VueCartographie from "./VueCartographie";
+import ModeTerrain from "./ModeTerrain";
 import { genererCertificatGage } from "./lib/certificat";
 import { telechargerCertificat } from "./lib/pdfCertificat";
 import { poserGageSQL, leverGageSQL, enregistrerConsultation, chargerGagesActifs, prolongerGageSQL, realiserGageSQL, chargerAlertesEcheance } from "./lib/gages";
@@ -18,7 +19,7 @@ import {
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
   ChevronRight, X, Landmark, Banknote, Building2, QrCode, Bell, Eye,
   CreditCard, Lock, Send, ArrowLeftRight, Globe, Layers, MapPin, ArrowLeft, Gavel, Download,
-  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet
+  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -103,6 +104,7 @@ const NAV = [
   { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { id: "cadastre", label: "Cadastre / SIG", icon: Map },
   { id: "cartographie", label: "Cartographie GPS", icon: MapPin },
+  { id: "mode_terrain", label: "Mode Terrain (GPS)", icon: Navigation },
   { id: "brigade_dashboard", label: "Pilotage Brigade", icon: Compass },
   { id: "titres", label: "Titres fonciers", icon: FileStack },
   { id: "cartes", label: "Cartes foncières", icon: CreditCard },
@@ -135,7 +137,7 @@ const NAV = [
 // saisie opérationnelle des autres services.
 
 const USERS = [
-  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["cartographie", "brigade_dashboard", "cadastre"] },
+  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
   { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["cartographie", "titres", "cartes"] },
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["cartographie", "domaine"] },
   { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet"] },
@@ -991,6 +993,7 @@ export default function SigefApp() {
           )}
 
           {view === "cartographie" && <VueCartographie parcelles={parcelles} />}
+          {view === "mode_terrain" && <ModeTerrain />}
 
           {view === "cadastre" && (
             <Cadastre
