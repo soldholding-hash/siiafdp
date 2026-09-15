@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Map, Layers, Loader2, TrendingUp } from "lucide-react";
+import { useState as useStateFiche } from "react";
+import FicheParcelle from "./FicheParcelle";
+import { telechargerPlanBornage } from "./lib/pdfPlanBornage";
 
 export default function VueCartographie({ parcelles }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const layersRef = useRef([]);
   const [stats, setStats] = useState({ total: 0, surface: 0, arrondissements: {} });
+  const [selectedParcelle, setSelectedParcelle] = useState(null);
 
   // Init carte
   useEffect(() => {
@@ -51,6 +55,7 @@ export default function VueCartographie({ parcelles }) {
         color: c.color, fillColor: c.fill, fillOpacity: 0.4, weight: 2,
       }).addTo(mapInstance.current);
 
+      polygon.on("click", () => setSelectedParcelle(p));
       polygon.bindPopup(
         '<div style="font-family: sans-serif; font-size: 12px;">' +
         '<div style="font-weight: 600; margin-bottom: 4px;">' + p.id + '</div>' +
@@ -150,6 +155,14 @@ export default function VueCartographie({ parcelles }) {
               ))}
           </div>
         </div>
+      )}
+
+      {selectedParcelle && (
+        <FicheParcelle
+          parcelle={selectedParcelle}
+          onClose={() => setSelectedParcelle(null)}
+          onTelecharger={telechargerPlanBornage}
+        />
       )}
     </div>
   );
