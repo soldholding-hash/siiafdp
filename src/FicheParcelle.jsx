@@ -130,7 +130,7 @@ function PlanBornage({ bornes, distances }) {
 
 export default function FicheParcelle({ parcelle, onClose, onTelecharger }) {
   if (!parcelle) return null;
-  const data = parcelle.data || {};
+  const data = parcelle.data || parcelle || {};
   const bornes = data.polygone || [];
   const distances = data.distances || {};
   const surface = data.surface_m2 || data.superficie || 0;
