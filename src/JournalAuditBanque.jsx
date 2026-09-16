@@ -19,6 +19,7 @@ export default function JournalAuditBanque({ compteId, nomBanque }) {
   const [contentieux, setContentieux] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtre, setFiltre] = useState("tous");
+  const [tri, setTri] = useState("desc"); // desc = plus récent en premier
 
   async function charger() {
     if (!compteId) return;
@@ -51,6 +52,7 @@ export default function JournalAuditBanque({ compteId, nomBanque }) {
       libelle: m.libelle,
       montant: m.montant,
       solde_apres: m.solde_apres,
+      user_email: m.user_email,
     });
   });
 
@@ -61,6 +63,7 @@ export default function JournalAuditBanque({ compteId, nomBanque }) {
       libelle: "Pose de gage " + g.parcelle_id,
       montant: -100000,
       details: "Dossier " + (g.dossier_credit || "—"),
+      user_email: g.user_email,
     });
   });
 
@@ -71,10 +74,14 @@ export default function JournalAuditBanque({ compteId, nomBanque }) {
       libelle: "Signalement impayé " + c.parcelle_id,
       montant: 0,
       details: "Motif : " + (c.motif || "—"),
+      user_email: c.user_email,
     });
   });
 
-  evenements.sort((a, b) => new Date(b.date) - new Date(a.date));
+  evenements.sort((a, b) => {
+    const diff = new Date(a.date) - new Date(b.date);
+    return tri === "asc" ? diff : -diff;
+  });
 
   const affiches = filtre === "tous" ? evenements : evenements.filter((e) => e.type === filtre);
 
@@ -119,6 +126,19 @@ export default function JournalAuditBanque({ compteId, nomBanque }) {
         </div>
       </div>
 
+      {/* Tri */}
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs text-stone-500">Tri :</span>
+        <button onClick={() => setTri("desc")}
+          className={"text-xs px-3 py-1.5 rounded-sm border " + (tri === "desc" ? "bg-stone-900 text-white border-stone-900" : "border-stone-300 text-stone-600 hover:bg-stone-50")}>
+          ↓ Plus récent
+        </button>
+        <button onClick={() => setTri("asc")}
+          className={"text-xs px-3 py-1.5 rounded-sm border " + (tri === "asc" ? "bg-stone-900 text-white border-stone-900" : "border-stone-300 text-stone-600 hover:bg-stone-50")}>
+          ↑ Plus ancien
+        </button>
+      </div>
+
       {/* Filtres */}
       <div className="flex flex-wrap gap-2">
         {["tous", "consultation", "gage", "recharge", "prolongation", "realisation", "signalement"].map((f) => (
@@ -148,6 +168,7 @@ export default function JournalAuditBanque({ compteId, nomBanque }) {
             <thead className="text-xs font-mono text-stone-500 bg-stone-50">
               <tr>
                 <th className="text-left py-3 px-4">Date & heure</th>
+                <th className="text-left py-3 px-4">Par qui</th>
                 <th className="text-left py-3 px-4">Type</th>
                 <th className="text-left py-3 px-4">Description</th>
                 <th className="text-right py-3 px-4">Montant</th>
@@ -162,6 +183,9 @@ export default function JournalAuditBanque({ compteId, nomBanque }) {
                   <tr key={i} className="border-b border-stone-100 hover:bg-stone-50">
                     <td className="py-3 px-4 text-xs text-stone-500">
                       {new Date(e.date).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                    </td>
+                    <td className="py-3 px-4 text-xs text-stone-600 font-mono">
+                      {e.user_email || "—"}
                     </td>
                     <td className="py-3 px-4">
                       <span className={"inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-sm font-medium " + style.couleur}>
