@@ -131,6 +131,7 @@ const NAV = [
   { id: "workflow", label: "Workflow", icon: GitBranch },
   { id: "dossiers_contentieux", label: "Dossiers contentieux", icon: Scale },
   { id: "dossiers_tribunal", label: "Dossiers au Tribunal", icon: Gavel },
+  { id: "tgi_commandements", label: "Instruction des commandements", icon: Scale },
   { id: "mes_contentieux", label: "Mes dossiers contentieux", icon: Scale },
   { id: "tableau_bord", label: "Tableau de bord", icon: BarChart3 },
   { id: "journal_banque", label: "Journal d'audit", icon: ShieldCheck },
