@@ -4029,30 +4029,40 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
             parcelle={{ id: signalParcelle.parcelle_id, proprietaire: parcelles.find((x) => x.id === signalParcelle.parcelle_id)?.proprietaire }}
             onClose={() => setSignalParcelle(null)}
             onDone={() => {
-              const parcelleConcernee = signalParcelle;
+              // ✅ Capturer les données AVANT de fermer le modal
+              const pData = signalParcelle;
               setSignalParcelle(null);
               setMsg({ ok: true, text: "Signalement transmis au Ministère. Vous pouvez maintenant mandater un huissier." });
-              // Ouvrir automatiquement le formulaire de mandat
-              setMandatParcelle(parcelleConcernee);
+              // Ouvrir le formulaire de mandat avec un objet safe
+              setTimeout(() => {
+                setMandatParcelle({
+                  parcelle_id: pData?.parcelle_id || pData?.id,
+                  _raw: pData
+                });
+              }, 100);
             }}
           />
         )}
 
-        {mandatParcelle && (
-          <MandaterHuissier
-            parcelle={{
-              id: mandatParcelle.parcelle_id,
-              proprietaire: parcelles.find((x) => x.id === mandatParcelle.parcelle_id)?.proprietaire
-            }}
-            banqueCompteId={currentUser.compteId}
-            banqueNom={currentUser.banque || currentUser.service}
-            onClose={() => setMandatParcelle(null)}
-            onDone={(m) => {
-              setMandatParcelle(null);
-              setMsg({ ok: true, text: "Mandat " + m.reference + " transmis à l'huissier. Il vous répondra dans son espace." });
-            }}
-          />
-        )}
+        {mandatParcelle && (() => {
+          const pid = mandatParcelle.parcelle_id || mandatParcelle.id;
+          const pobj = parcelles.find((x) => x.id === pid) || {};
+          return (
+            <MandaterHuissier
+              parcelle={{
+                id: pid,
+                proprietaire: pobj.proprietaire || "Non affecté"
+              }}
+              banqueCompteId={currentUser.compteId}
+              banqueNom={currentUser.banque || currentUser.service}
+              onClose={() => setMandatParcelle(null)}
+              onDone={(m) => {
+                setMandatParcelle(null);
+                setMsg({ ok: true, text: "Mandat " + m.reference + " transmis à l'huissier. Il vous répondra dans son espace." });
+              }}
+            />
+          );
+        })()}
       </div>
 
       <div className="bg-white border border-stone-200 rounded-sm p-5">
