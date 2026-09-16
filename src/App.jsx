@@ -11,6 +11,7 @@ import VerifierCertificat from "./VerifierCertificat";
 import TableauDeBord from "./TableauDeBord";
 import VueCartographie from "./VueCartographie";
 import ParcellesEnAttente from "./ParcellesEnAttente";
+import { telechargerTitreFoncier } from "./lib/pdfTitreFoncier";
 import ValidationMinistere from "./ValidationMinistere";
 import ModeTerrain from "./ModeTerrain";
 import { creerParcelleTerrain } from "./lib/terrain";
@@ -1954,7 +1955,7 @@ function Titres({ parcelles, dossiers }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-stone-500 border-b border-stone-200 font-mono text-xs uppercase">
-            <th className="pb-2">Parcelle</th><th>N° Titre</th><th>Propriétaire</th><th>Commune</th><th>Superficie</th><th>Statut</th><th>Dossier lié</th><th></th>
+            <th className="pb-2">Parcelle</th><th>N° Titre</th><th>Propriétaire</th><th>Commune</th><th>Superficie</th><th>Statut</th><th>Dossier lié</th><th>Documents</th>
           </tr>
         </thead>
         <tbody>
@@ -1971,10 +1972,15 @@ function Titres({ parcelles, dossiers }) {
                   <td className="text-stone-600">{p.superficie} m²</td>
                   <td><span className={`text-xs px-2 py-1 rounded-sm ${STATUT_STYLE[p.statut].bg} ${STATUT_STYLE[p.statut].text}`}>{STATUT_STYLE[p.statut].label}</span></td>
                   <td className="text-xs text-stone-500 font-mono">{dossier ? dossier.id : "—"}</td>
-                  <td>
+                  <td className="space-x-2">
+                    {p.numero_titre && (
+                      <button onClick={() => telechargerTitreFoncier(p)} className="text-xs text-purple-700 hover:underline font-medium">
+                        📜 Titre PDF
+                      </button>
+                    )}
                     {delivre && (
                       <button onClick={() => setExpanded(expanded === p.id ? null : p.id)} className="text-xs text-emerald-700 hover:underline">
-                        {expanded === p.id ? "Masquer" : "Titre sécurisé"}
+                        {expanded === p.id ? "Masquer" : "Détails"}
                       </button>
                     )}
                   </td>
