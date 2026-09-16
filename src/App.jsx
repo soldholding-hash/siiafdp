@@ -21,7 +21,7 @@ import {
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
   ChevronRight, X, Landmark, Banknote, Building2, QrCode, Bell, Eye,
   CreditCard, Lock, Send, ArrowLeftRight, Globe, Layers, MapPin, ArrowLeft, Gavel, Download,
-  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation, CheckCircle2
+  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
