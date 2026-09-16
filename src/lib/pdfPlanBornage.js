@@ -171,10 +171,26 @@ export async function telechargerPlanBornage(parcelle) {
   doc.setFont("courier", "bold");
   doc.setFontSize(9);
   doc.setTextColor(120, 60, 200);
-  doc.text("CODE DE VÉRIFICATION : " + codeVerif, W / 2, 77, { align: "center" });
+  doc.text("CODE DE VÉRIFICATION : " + codeVerif, W / 2, 76, { align: "center" });
+
+  // QR code en haut à droite de la page 1
+  if (qrDataUrl) {
+    try {
+      doc.addImage(qrDataUrl, "PNG", W - M - 28, 12, 24, 24);
+      doc.setFont("times", "italic");
+      doc.setFontSize(6);
+      doc.setTextColor(120, 120, 120);
+      doc.text("Vérifier", W - M - 16, 38, { align: "center" });
+    } catch (e) {}
+  }
 
   doc.setDrawColor(180, 180, 180);
-  doc.line(M + 30, 81, W - M - 30, 81);
+  doc.line(M + 30, 82, W - M - 30, 82);
+
+  doc.setFont("courier", "normal");
+  doc.setFontSize(6);
+  doc.setTextColor(140, 100, 200);
+  doc.text("SHA-256 : " + hash.substring(0, 48) + "...", W / 2, 86, { align: "center" });
 
   // Identification
   let y = 89;
@@ -201,6 +217,9 @@ export async function telechargerPlanBornage(parcelle) {
 
   ligne("Arrondissement", data.arrondissement || "—");
   ligne("Ville", data.ville || "Brazzaville");
+  ligne("Quartier", data.quartier || "—");
+  ligne("Section cadastrale", data.section || "—");
+  ligne("N° de lot", data.lot || "—");
   ligne("Quartier", data.quartier || "—");
   ligne("Section cadastrale", data.section || "—");
   ligne("Numéro de lot", data.lot || "—");

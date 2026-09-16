@@ -35,6 +35,9 @@ export default function ModeTerrain({ onEnregistrer, onRetour }) {
   const [suivi, setSuivi] = useState(false);
   const [erreur, setErreur] = useState(null);
   const [arrondissement, setArrondissement] = useState("");
+  const [quartier, setQuartier] = useState("");
+  const [section, setSection] = useState("");
+  const [lot, setLot] = useState("");
 
   const ARRONDISSEMENTS = [
     "Makélékélé", "Bacongo", "Poto-Poto", "Moungali", "Ouenzé",
@@ -315,19 +318,44 @@ export default function ModeTerrain({ onEnregistrer, onRetour }) {
 
           {complet && (
             <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 space-y-2">
-              <label className="text-xs font-semibold text-amber-900 block">Arrondissement de la parcelle</label>
-              <select value={arrondissement} onChange={(e) => setArrondissement(e.target.value)}
-                className="w-full border border-amber-300 rounded-sm px-2 py-2 text-xs bg-white">
-                <option value="">— Sélectionner l'arrondissement —</option>
-                {ARRONDISSEMENTS.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-              </select>
+              <div className="text-xs font-semibold text-amber-900 mb-1">Identité cadastrale de la parcelle</div>
+
+              <div>
+                <label className="text-xs text-amber-800 block mb-1">Arrondissement *</label>
+                <select value={arrondissement} onChange={(e) => setArrondissement(e.target.value)}
+                  className="w-full border border-amber-300 rounded-sm px-2 py-2 text-xs bg-white">
+                  <option value="">— Sélectionner —</option>
+                  {ARRONDISSEMENTS.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs text-amber-800 block mb-1">Quartier</label>
+                <input type="text" value={quartier} onChange={(e) => setQuartier(e.target.value)}
+                  placeholder="Ex : Mpila, Diata, Moukondo..."
+                  className="w-full border border-amber-300 rounded-sm px-2 py-2 text-xs bg-white" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-amber-800 block mb-1">Section cadastrale</label>
+                  <input type="text" value={section} onChange={(e) => setSection(e.target.value)}
+                    placeholder="Ex : A-12"
+                    className="w-full border border-amber-300 rounded-sm px-2 py-2 text-xs bg-white" />
+                </div>
+                <div>
+                  <label className="text-xs text-amber-800 block mb-1">N° de lot</label>
+                  <input type="text" value={lot} onChange={(e) => setLot(e.target.value)}
+                    placeholder="Ex : 042"
+                    className="w-full border border-amber-300 rounded-sm px-2 py-2 text-xs bg-white" />
+                </div>
+              </div>
+
               <button onClick={() => {
-                if (!arrondissement) { alert("Sélectionnez un arrondissement avant de valider"); return; }
-                onEnregistrer && onEnregistrer({ bornes, distances, surface: surfaceMano, arrondissement });
+                if (!arrondissement) { alert("Sélectionnez un arrondissement"); return; }
+                onEnregistrer && onEnregistrer({ bornes, distances, surface: surfaceMano, arrondissement, quartier, section, lot });
               }}
-                className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm py-3 rounded-sm font-semibold">
+                className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm py-3 rounded-sm font-semibold mt-2">
                 <Check size={16} /> Valider la parcelle ({bornes.length} bornes, ~{Math.round(surfaceMano).toLocaleString("fr-FR")} m²)
               </button>
             </div>
