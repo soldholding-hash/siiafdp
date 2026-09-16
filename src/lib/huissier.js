@@ -340,3 +340,48 @@ export async function deciderTGI(commandementId, payload) {
 
   return { ok: true, commandement: data };
 }
+
+// ============================================
+// URL SIGNÉES pour ouvrir les documents privés
+// ============================================
+
+export async function getSignedUrl(path, expireSecondes = 3600) {
+  if (!path) return null;
+  // Si on a déjà une URL complète, on extrait juste le chemin interne
+  let storagePath = path;
+  if (path.includes("/huissier-documents/")) {
+    storagePath = path.split("/huissier-documents/")[1];
+    // Retirer les query params si présents
+    storagePath = storagePath.split("?")[0];
+  }
+  const { data, error } = await supabase.storage
+    .from("huissier-documents")
+    .createSignedUrl(storagePath, expireSecondes);
+  if (error) { console.error(error); return null; }
+  return data?.signedUrl || null;
+}
+
+export async function uploaderOrdonnanceTGI(commandementId, file, prefix) {
+  if (!file) return { ok: false, raison: "Aucun fichier" };
+  const ext = file.name.split(".").pop();
+  const path = `${prefix}/${commandementId}-ordonnance-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from("huissier-documents")
+    .upload(path, file, { upsert: false });
+  if (error) return { ok: false, raison: error.message };
+  const { data: urlData } = supabase.storage
+    .from("huissier-documents")
+    .getPublicUrl(path);
+  return { ok: true, path, url: urlData?.publicUrl };
+}
+
+export async function enregistrerOrdonnance(commandementId, ordonnanceUrl) {
+  const { data, error } = await supabase
+    .from("commandements")
+    .update({ ordonnance_tgi_url: ordonnanceUrl })
+    .eq("id", commandementId)
+    .select()
+    .single();
+  if (error) return { ok: false, raison: error.message };
+  return { ok: true, commandement: data };
+}

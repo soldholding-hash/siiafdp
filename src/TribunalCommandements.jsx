@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Scale, Loader2, X, FileText, CheckCircle, XCircle, AlertCircle, Clock } from "lucide-react";
-import { listerDossiersTGI, deciderTGI, chargerCircuit } from "./lib/huissier";
+import { Scale, Loader2, X, FileText, CheckCircle, XCircle, AlertCircle, Clock, Eye, Upload, Paperclip } from "lucide-react";
+import { listerDossiersTGI, deciderTGI, chargerCircuit, getSignedUrl, uploaderOrdonnanceTGI, enregistrerOrdonnance } from "./lib/huissier";
 
 const fmt = (n) => new Intl.NumberFormat("fr-FR").format(n || 0) + " FCFA";
 
@@ -10,18 +10,36 @@ function ModalDecision({ dossier, onClose, onDone }) {
   const [motif, setMotif] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
+  const [ordonnance, setOrdonnance] = useState(null);
+
+  async function ouvrirPiece(url) {
+    if (!url) return;
+    const signed = await getSignedUrl(url, 3600);
+    if (signed) window.open(signed, "_blank");
+    else alert("Impossible d'ouvrir le document.");
+  }
 
   async function valider() {
     if (!magistrat.trim()) { setErr("Nom du magistrat obligatoire"); return; }
     if (decision !== "approuve" && !motif.trim()) { setErr("Motif obligatoire pour un rejet"); return; }
     setLoading(true);
-    const res = await deciderTGI(dossier.id, {
-      decision, magistrat: magistrat.trim(), motif: motif.trim() || null,
-      acteur_nom: magistrat.trim(),
-    });
-    setLoading(false);
-    if (!res.ok) { setErr(res.raison); return; }
-    onDone();
+    try {
+      let ordonnanceUrl = null;
+      if (ordonnance) {
+        const up = await uploaderOrdonnanceTGI(dossier.id, ordonnance, "ordonnances");
+        if (up.ok) {
+          ordonnanceUrl = up.url;
+          await enregistrerOrdonnance(dossier.id, up.url);
+        }
+      }
+      const res = await deciderTGI(dossier.id, {
+        decision, magistrat: magistrat.trim(), motif: motif.trim() || null,
+        acteur_nom: magistrat.trim(),
+      });
+      setLoading(false);
+      if (!res.ok) { setErr(res.raison); return; }
+      onDone();
+    } catch (e) { setErr(e.message); setLoading(false); }
   }
 
   return (
@@ -38,6 +56,59 @@ function ModalDecision({ dossier, onClose, onDone }) {
             <div><strong>Débiteur :</strong> {dossier.debiteur_nom}</div>
             <div><strong>Montant :</strong> {fmt(dossier.montant_pretendu)}</div>
             <div><strong>Soumis le :</strong> {dossier.soumis_tgi_le ? new Date(dossier.soumis_tgi_le).toLocaleString("fr-FR") : "—"}</div>
+          </div>
+
+          {/* PIÈCES JOINTES DU DOSSIER */}
+          <div>
+            <label className="text-xs font-mono text-stone-500 block mb-2 flex items-center gap-1">
+              <Paperclip size={11} /> Pièces jointes du dossier
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between bg-stone-50 border border-stone-200 rounded-sm p-3">
+                <div className="text-xs">
+                  <div className="font-semibold text-stone-700">Acte de commandement</div>
+                  <div className="text-stone-400 text-[10px]">
+                    {dossier.document_pdf_url ? "PDF joint par l'huissier" : "Aucun document joint"}
+                  </div>
+                </div>
+                {dossier.document_pdf_url ? (
+                  <button onClick={() => ouvrirPiece(dossier.document_pdf_url)}
+                    className="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm inline-flex items-center gap-1">
+                    <Eye size={11} /> Voir
+                  </button>
+                ) : (
+                  <span className="text-xs text-stone-400">—</span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between bg-stone-50 border border-stone-200 rounded-sm p-3">
+                <div className="text-xs">
+                  <div className="font-semibold text-stone-700">Justificatif de notification</div>
+                  <div className="text-stone-400 text-[10px]">
+                    {dossier.document_notification_url
+                      ? "PV / accusé joint"
+                      : dossier.notifie_le
+                      ? "Notification effectuée — voir observation ci-dessous"
+                      : "Non notifié"}
+                  </div>
+                </div>
+                {dossier.document_notification_url ? (
+                  <button onClick={() => ouvrirPiece(dossier.document_notification_url)}
+                    className="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm inline-flex items-center gap-1">
+                    <Eye size={11} /> Voir
+                  </button>
+                ) : (
+                  <span className="text-xs text-stone-400">—</span>
+                )}
+              </div>
+
+              {dossier.observation && (
+                <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 text-xs">
+                  <div className="font-semibold text-amber-900 mb-1">Observation de l'huissier</div>
+                  <div className="text-amber-800 italic">« {dossier.observation} »</div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -61,6 +132,16 @@ function ModalDecision({ dossier, onClose, onDone }) {
             <input value={magistrat} onChange={(e) => setMagistrat(e.target.value)}
               placeholder="Ex: Juge Kimbembé"
               className="w-full border border-stone-300 rounded-sm px-3 py-2 text-sm" />
+          </div>
+
+          <div>
+            <label className="text-xs font-mono text-stone-500 block mb-1">
+              Ordonnance PDF signée (optionnel)
+            </label>
+            <input type="file" accept="application/pdf,image/jpeg,image/png"
+              onChange={(e) => setOrdonnance(e.target.files?.[0] || null)}
+              className="w-full text-xs text-stone-600 file:mr-3 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:bg-purple-600 file:text-white hover:file:bg-purple-700" />
+            {ordonnance && <div className="text-xs text-emerald-700 mt-1 flex items-center gap-1"><Paperclip size={11} /> {ordonnance.name}</div>}
           </div>
 
           <div>
@@ -190,6 +271,13 @@ export default function TribunalCommandements() {
                       <span className="text-xs text-stone-500" title={d.motif_tgi}>
                         {d.motif_tgi.slice(0, 40)}...
                       </span>
+                    )}
+                    {d.document_pdf_url && (
+                      <button onClick={() => getSignedUrl(d.document_pdf_url).then((u) => u && window.open(u, "_blank"))}
+                        className="text-xs px-2 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-sm inline-flex items-center gap-1 ml-1"
+                        title="Voir l'acte de commandement">
+                        <Paperclip size={10} />
+                      </button>
                     )}
                   </td>
                 </tr>
