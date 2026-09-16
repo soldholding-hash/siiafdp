@@ -72,10 +72,13 @@ export default function VueCartographie({ parcelles }) {
       arr[a] = (arr[a] || 0) + 1;
     });
 
-    // Ajuster la vue aux parcelles si présentes
+    // Ajuster la vue aux parcelles sans dézoomer trop (max 15, min 13)
     if (layersRef.current.length > 0) {
       const group = L.featureGroup(layersRef.current);
-      mapInstance.current.fitBounds(group.getBounds(), { padding: [50, 50] });
+      const bounds = group.getBounds();
+      mapInstance.current.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
+    } else {
+      mapInstance.current.setView([-4.2634, 15.2429], 13);
     }
 
     setStats({ total: parcelles.length, surface: totalSurface, arrondissements: arr });
