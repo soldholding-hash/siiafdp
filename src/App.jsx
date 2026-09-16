@@ -11,6 +11,7 @@ import VerifierCertificat from "./VerifierCertificat";
 import TableauDeBord from "./TableauDeBord";
 import VueCartographie from "./VueCartographie";
 import ParcellesEnAttente from "./ParcellesEnAttente";
+import ValidationMinistere from "./ValidationMinistere";
 import ModeTerrain from "./ModeTerrain";
 import { creerParcelleTerrain } from "./lib/terrain";
 import { genererCertificatGage } from "./lib/certificat";
@@ -110,6 +111,7 @@ const NAV = [
   { id: "mode_terrain", label: "Mode Terrain (GPS)", icon: Navigation },
   { id: "brigade_dashboard", label: "Pilotage Brigade", icon: Compass },
   { id: "parcelles_attente", label: "Parcelles en attente", icon: CheckCircle2 },
+  { id: "validation_ministere", label: "Validation Ministère", icon: Gavel },
   { id: "titres", label: "Titres fonciers", icon: FileStack },
   { id: "cartes", label: "Cartes foncières", icon: CreditCard },
   { id: "domaine", label: "Domaine public", icon: Landmark },
@@ -150,11 +152,11 @@ const USERS = [
   { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["tresor"] },
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["dossiers_contentieux", "audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["rh"] },
-  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
+  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["validation_ministere", "cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
   { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
   { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
   { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
-  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
+  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["validation_ministere", "cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
 function rectsOverlap(a, b) {
@@ -1046,6 +1048,7 @@ export default function SigefApp() {
 
           {view === "titres" && <Titres parcelles={parcelles} dossiers={dossiers} />}
           {view === "parcelles_attente" && <ParcellesEnAttente parcelles={parcelles} onRafraichir={() => window.location.reload()} />}
+          {view === "validation_ministere" && <ValidationMinistere parcelles={parcelles} onRafraichir={() => window.location.reload()} />}
 
           {view === "cartes" && (
             <CartesFoncieres
