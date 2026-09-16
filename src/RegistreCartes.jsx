@@ -95,7 +95,7 @@ export default function CartesFoncieres() {
                 const d = c.data || c;
                 const dateEmission = d.date_emission ? new Date(d.date_emission).toLocaleDateString("fr-FR") : "—";
                 const dateExpiration = d.date_expiration ? new Date(d.date_expiration).toLocaleDateString("fr-FR") : "—";
-                const parcelleIds = d.parcelle_ids || [];
+                const parcelleIds = d.parcelle_ids || d.parcelleIds || [];
                 return (
                   <tr key={d.id} className="border-b border-stone-100 hover:bg-stone-50">
                     <td className="py-3 px-4 font-mono text-xs font-semibold text-purple-700">{d.id}</td>
