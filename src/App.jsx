@@ -16,6 +16,7 @@ import ValidationMinistere from "./ValidationMinistere";
 import RegistreCartes from "./RegistreCartes";
 import JournalAuditBanque from "./JournalAuditBanque";
 import RechargerPartenaire from "./RechargerPartenaire";
+import GelsJudiciaires from "./GelsJudiciaires";
 import ModeTerrain from "./ModeTerrain";
 import { creerParcelleTerrain } from "./lib/terrain";
 import { genererCertificatGage } from "./lib/certificat";
@@ -141,6 +142,7 @@ const NAV = [
   { id: "laboratoire", label: "Laboratoire d'Anticipation", icon: Lightbulb },
   { id: "securigage", label: "Sécuri-Gage Foncier", icon: Lock },
   { id: "judiciaire", label: "Connexion Judiciaire", icon: Scale },
+  { id: "gels_judiciaires", label: "Gels judiciaires", icon: Gavel },
   { id: "aml", label: "Conformité AML", icon: AlertTriangle },
 ];
 
@@ -155,14 +157,14 @@ const USERS = [
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["cartographie", "domaine"] },
   { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
-  { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["dossiers_contentieux", "workflow"] },
+  { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["gels_judiciaires", "dossiers_contentieux", "workflow"] },
   { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["recharger_partenaire", "tresor"] },
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["dossiers_contentieux", "audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["rh"] },
   { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["recharger_partenaire", "validation_ministere", "cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
   { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
   { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
-  { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
+  { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["gels_judiciaires", "mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
   { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["validation_ministere", "cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
@@ -1150,6 +1152,8 @@ export default function SigefApp() {
               onLeverGage={leverGage}
             />
           )}
+
+          {view === "gels_judiciaires" && <GelsJudiciaires />}
 
           {view === "judiciaire" && (
             <ConnexionJudiciaire
