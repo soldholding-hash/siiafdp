@@ -171,6 +171,43 @@ export default function AMLBanque({ compteId, nomBanque }) {
         </button>
       </div>
 
+      {/* PERIMETRE D'ANALYSE */}
+      <div className="bg-stone-50 border border-stone-300 rounded-sm p-4 space-y-3">
+        <div className="text-xs font-mono text-stone-500 uppercase">Perimetre d'analyse</div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-sm p-3 space-y-1.5">
+            <div className="font-semibold text-emerald-900 flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Donnees analysees
+            </div>
+            <ul className="text-emerald-800 space-y-1 pl-3.5 list-disc">
+              <li>Consultations de titres et cartes par vos agents</li>
+              <li>Gages poses sur le registre central</li>
+              <li>Signalements d'impayes transmis au Ministere</li>
+              <li>Tentatives de double gage refusees</li>
+              <li>Mouvements de votre portefeuille</li>
+            </ul>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 space-y-1.5">
+            <div className="font-semibold text-amber-900 flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-amber-500 rounded-full"></span> Hors perimetre actuel
+            </div>
+            <ul className="text-amber-800 space-y-1 pl-3.5 list-disc">
+              <li>Transactions hors plateforme (especes, informel)</li>
+              <li>Operations d'autres institutions non partenaires</li>
+              <li>Donnees fiscales (DGI) et douanieres</li>
+              <li>Flux bancaires internes a votre etablissement</li>
+              <li>Signalements en temps reel avec l'ANIF</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-stone-500 pt-2 border-t border-stone-200">
+          <strong>Extension prevue (phase 3) :</strong> interconnexion ANIF, DGI, COBAC et registre national d'identite pour une surveillance a l'echelle nationale.
+        </div>
+      </div>
+
       {nbNouvelles > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-sm p-4 flex items-center gap-3">
           <AlertTriangle className="text-red-700" size={20} />
