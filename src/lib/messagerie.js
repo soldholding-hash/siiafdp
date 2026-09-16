@@ -44,17 +44,18 @@ export async function listerMessagesRecus(filtre = "tous", roleForce = null) {
     role = profile?.role;
   }
 
+  // Récupérer TOUS les destinataires visibles, on filtrera en JS
   let query = supabase
     .from("message_destinataires")
     .select(`
       id, lu, lu_le, supprime, created_at,
+      destinataire_id, destinataire_role,
       messages (
         id, expediteur_nom, expediteur_role, sujet, corps,
         type, priorite, reference_dossier, reference_parcelle,
         reference_entite, created_at
       )
     `)
-    .or(`destinataire_id.eq.${user.id},destinataire_role.eq.${role}`)
     .eq("supprime", false);
 
   if (filtre === "non_lus") query = query.eq("lu", false);
@@ -62,7 +63,15 @@ export async function listerMessagesRecus(filtre = "tous", roleForce = null) {
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) { console.error(error); return []; }
 
-  return (data || []).map((d) => ({ ...d.messages, _dest_id: d.id, lu: d.lu }));
+  // ✅ Filtrer en JS : role OU user_id correspond
+  const filtres = (data || []).filter((d) => {
+    if (!d.messages) return false;
+    if (d.destinataire_id === user.id) return true;
+    if (role && d.destinataire_role === role) return true;
+    return false;
+  });
+
+  return filtres.map((d) => ({ ...d.messages, _dest_id: d.id, lu: d.lu }));
 }
 
 export async function listerMessagesEnvoyes() {
