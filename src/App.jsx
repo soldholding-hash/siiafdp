@@ -13,6 +13,7 @@ import VueCartographie from "./VueCartographie";
 import ParcellesEnAttente from "./ParcellesEnAttente";
 import { telechargerTitreFoncier } from "./lib/pdfTitreFoncier";
 import ValidationMinistere from "./ValidationMinistere";
+import CartesFoncieres from "./CartesFoncieres";
 import ModeTerrain from "./ModeTerrain";
 import { creerParcelleTerrain } from "./lib/terrain";
 import { genererCertificatGage } from "./lib/certificat";
@@ -115,6 +116,7 @@ const NAV = [
   { id: "validation_ministere", label: "Validation Ministère", icon: Gavel },
   { id: "titres", label: "Titres fonciers", icon: FileStack },
   { id: "cartes", label: "Cartes foncières", icon: CreditCard },
+  { id: "cartes_page", label: "Registre des cartes", icon: CreditCard },
   { id: "domaine", label: "Domaine public", icon: Landmark },
   { id: "guichet", label: "Guichet unique", icon: Inbox },
   { id: "guichet_externe", label: "Guichet externe", icon: Building2 },
@@ -145,7 +147,7 @@ const NAV = [
 
 const USERS = [
   { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["parcelles_attente", "mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
-  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["parcelles_attente", "cartographie", "titres", "cartes"] },
+  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["parcelles_attente", "cartes_page", "cartographie", "titres", "cartes"] },
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["cartographie", "domaine"] },
   { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
@@ -1050,6 +1052,8 @@ export default function SigefApp() {
           {view === "titres" && <Titres parcelles={parcelles} dossiers={dossiers} />}
           {view === "parcelles_attente" && <ParcellesEnAttente parcelles={parcelles} onRafraichir={() => window.location.reload()} />}
           {view === "validation_ministere" && <ValidationMinistere parcelles={parcelles} onRafraichir={() => window.location.reload()} />}
+
+          {view === "cartes_page" && <CartesFoncieres />}
 
           {view === "cartes" && (
             <CartesFoncieres
