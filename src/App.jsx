@@ -24,6 +24,7 @@ import HuissierCommandements from "./HuissierCommandements";
 import HuissierMandats from "./HuissierMandats";
 import MandaterHuissier from "./MandaterHuissier";
 import Messagerie from "./Messagerie";
+import AppelVoIP from "./AppelVoIP";
 import { compterMessagesNonLus } from "./lib/messagerie";
 import TribunalCommandements from "./TribunalCommandements";
 import ModeTerrain from "./ModeTerrain";
@@ -1174,6 +1175,9 @@ export default function SigefApp() {
           {view === "huissier_commandements" && <HuissierCommandements />}
           {view === "huissier_mandats" && <HuissierMandats />}
           {view === "messagerie" && <Messagerie currentUser={currentUser} />}
+
+          {/* VoIP - Appels internes */}
+          {currentUser && <AppelVoIP currentUser={currentUser} />}
           {view === "tgi_commandements" && <TribunalCommandements />}
 
           {view === "judiciaire" && (
