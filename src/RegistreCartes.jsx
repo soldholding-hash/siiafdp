@@ -13,7 +13,7 @@ export default function CartesFoncieres() {
       const { data, error } = await supabase
         .from("cartes")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("updated_at", { ascending: false });
       if (error) throw error;
       setCartes(data || []);
     } catch (e) {
