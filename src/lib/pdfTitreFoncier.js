@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-import QRCode from "qrcode";
 
 async function sha256(str) {
   const encoder = new TextEncoder();
@@ -23,6 +21,8 @@ async function chargerBlason() {
 }
 
 export async function telechargerTitreFoncier(parcelle) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: QRCode } = await import("qrcode");
   const data = parcelle.data || parcelle || {};
   const numTitre = data.numero_titre || "NON-DEFINI";
   const proprietaire = data.proprietaire || "À identifier";

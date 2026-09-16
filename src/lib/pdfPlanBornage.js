@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-import QRCode from "qrcode";
 
 const lettre = (i) => String.fromCharCode(65 + (i % 26));
 
@@ -102,6 +100,8 @@ async function chargerBlason() {
 }
 
 export async function telechargerPlanBornage(parcelle) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: QRCode } = await import("qrcode");
   const data = parcelle.data || parcelle || {};
   const bornes = data.polygone || [];
   const distances = data.distances || {};

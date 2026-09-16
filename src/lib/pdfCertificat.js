@@ -1,7 +1,7 @@
-import jsPDF from "jspdf";
-import QRCode from "qrcode";
 
 export async function telechargerCertificat(data) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: QRCode } = await import("qrcode");
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
   // Charger le blason de la République du Congo

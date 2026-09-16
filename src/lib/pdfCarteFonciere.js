@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-import QRCode from "qrcode";
 
 async function sha256(str) {
   const encoder = new TextEncoder();
@@ -21,6 +19,8 @@ async function chargerBlason() {
 }
 
 export async function telechargerCarteFonciere(carte) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: QRCode } = await import("qrcode");
   const data = carte.data || carte || {};
   const numCarte = data.id || "CF-0000";
   const titulaire = data.titulaire || "—";
