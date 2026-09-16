@@ -259,3 +259,84 @@ export async function uploaderBlobHuissier(blob, prefix) {
     .getPublicUrl(path);
   return { ok: true, path, url: urlData?.publicUrl };
 }
+
+// ============================================
+// CIRCUIT TGI — Soumission & décision
+// ============================================
+
+export async function soumettreAuTGI(commandementId, payload) {
+  const { data, error } = await supabase
+    .from("commandements")
+    .update({
+      statut: "soumis_tgi",
+      soumis_tgi_le: new Date().toISOString(),
+    })
+    .eq("id", commandementId)
+    .select()
+    .single();
+  if (error) return { ok: false, raison: error.message };
+
+  await supabase.from("circuit_commandements").insert({
+    commandement_id: commandementId,
+    acteur_id: payload.acteur_id,
+    acteur_nom: payload.acteur_nom,
+    role_acteur: "huissier",
+    action: "soumission_tgi",
+    details: payload.observation || null,
+  });
+
+  return { ok: true, commandement: data };
+}
+
+export async function chargerCircuit(commandementId) {
+  const { data, error } = await supabase
+    .from("circuit_commandements")
+    .select("*")
+    .eq("commandement_id", commandementId)
+    .order("created_at", { ascending: true });
+  if (error) return [];
+  return data || [];
+}
+
+export async function listerDossiersTGI(statutFiltre = "soumis_tgi") {
+  const { data, error } = await supabase
+    .from("commandements")
+    .select("*")
+    .eq("statut", statutFiltre)
+    .order("soumis_tgi_le", { ascending: true });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+export async function deciderTGI(commandementId, payload) {
+  const nouveauStatut = 
+    payload.decision === "approuve" ? "autorise"
+    : payload.decision === "rejete" ? "rejete"
+    : "complement_requis";
+
+  const { data, error } = await supabase
+    .from("commandements")
+    .update({
+      statut: nouveauStatut,
+      decision_tgi: payload.decision,
+      decision_tgi_le: new Date().toISOString(),
+      magistrat_tgi: payload.magistrat,
+      motif_tgi: payload.motif || null,
+    })
+    .eq("id", commandementId)
+    .select()
+    .single();
+  if (error) return { ok: false, raison: error.message };
+
+  await supabase.from("circuit_commandements").insert({
+    commandement_id: commandementId,
+    acteur_id: payload.acteur_id,
+    acteur_nom: payload.acteur_nom,
+    role_acteur: "tgi",
+    action: "decision_tgi",
+    details: payload.decision,
+    motif: payload.motif || null,
+  });
+
+  return { ok: true, commandement: data };
+}

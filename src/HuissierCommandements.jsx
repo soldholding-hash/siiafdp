@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   FileText, Plus, Loader2, X, Upload, Bell, Calendar, Check,
-  ExternalLink, AlertCircle, Award
+  ExternalLink, AlertCircle, Award, Scale, Send
 } from "lucide-react";
 import {
   chargerMonProfilHuissier,
@@ -9,6 +9,7 @@ import {
   creerCommandement,
   uploaderDocumentHuissier,
   notifierCommandement,
+  soumettreAuTGI,
   enregistrerCertificat,
   uploaderBlobHuissier,
 } from "./lib/huissier";
@@ -17,7 +18,11 @@ import { genererCertificatCommandement } from "./lib/pdfCertificatHuissier";
 const STATUT_INFO = {
   actif: { label: "Actif", couleur: "bg-orange-100 text-orange-800" },
   notifie: { label: "Notifié", couleur: "bg-blue-100 text-blue-800" },
-  converti_saisie: { label: "Converti en saisie", couleur: "bg-red-100 text-red-800" },
+  soumis_tgi: { label: "Soumis au TGI", couleur: "bg-purple-100 text-purple-800" },
+  complement_requis: { label: "Complément requis", couleur: "bg-amber-100 text-amber-800" },
+  autorise: { label: "Autorisé par TGI", couleur: "bg-emerald-100 text-emerald-800" },
+  rejete: { label: "Rejeté par TGI", couleur: "bg-red-100 text-red-800" },
+  converti_saisie: { label: "Converti en saisie", couleur: "bg-red-200 text-red-900" },
   mainleve: { label: "Main-levée", couleur: "bg-emerald-100 text-emerald-800" },
   expire: { label: "Expiré", couleur: "bg-stone-100 text-stone-700" },
 };
@@ -308,6 +313,22 @@ export default function HuissierCommandements() {
     }
   }
 
+  async function soumettreTGI(c) {
+    if (!confirm("Soumettre ce dossier au TGI pour autorisation ?")) return;
+    try {
+      setMsg({ ok: true, text: "Soumission au TGI..." });
+      const res = await soumettreAuTGI(c.id, {
+        acteur_id: profil?.user_id || null,
+        acteur_nom: profil?.nom_complet || "Huissier",
+        observation: "Dossier complet, notification effectuée",
+      });
+      if (!res.ok) { setMsg({ ok: false, text: res.raison }); return; }
+      setMsg({ ok: true, text: "Dossier soumis au TGI." });
+      await charger();
+      setTimeout(() => setMsg(null), 3000);
+    } catch (e) { setMsg({ ok: false, text: e.message }); }
+  }
+
   async function apresNotification() {
     setNotifCible(null);
     setMsg({ ok: true, text: "Commandement notifié." });
@@ -389,9 +410,22 @@ export default function HuissierCommandements() {
                         </button>
                       )}
                       {c.statut === "notifie" && (
+                        <button onClick={() => soumettreTGI(c)}
+                          className="text-xs px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-sm inline-flex items-center gap-1"
+                          title="Soumettre au TGI pour autorisation">
+                          <Scale size={11} /> Soumettre TGI
+                        </button>
+                      )}
+                      {(c.statut === "autorise" || c.statut === "rejete" || c.statut === "complement_requis") && (
+                        <span className={"text-xs px-2 py-1 rounded-sm " + (c.statut === "autorise" ? "bg-emerald-100 text-emerald-800" : c.statut === "rejete" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800")}
+                          title={c.motif_tgi || ""}>
+                          {c.statut === "autorise" ? "✅ Ordonnance rendue" : c.statut === "rejete" ? "❌ Rejeté" : "⚠️ Complément"}
+                        </span>
+                      )}
+                      {c.statut === "autorise" && (
                         <button onClick={() => delivrerCertificat(c, "non_contestation")}
                           className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center gap-1"
-                          title="Délivrer un certificat de non-contestation">
+                          title="Délivrer un certificat">
                           <Award size={11} /> Certificat
                         </button>
                       )}
