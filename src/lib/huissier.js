@@ -219,7 +219,7 @@ export async function notifierCommandement(commandementId, payload) {
       notifie_le: new Date().toISOString(),
       notifie_a: payload.notifie_a,
       mode_notification: payload.mode_notification,
-      document_pdf_url: payload.document_pdf_url,
+      document_notification_url: payload.document_pdf_url,
       observation: payload.observation || null,
     })
     .eq("id", commandementId)
