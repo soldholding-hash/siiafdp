@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import {
-  Gavel, FileText, Wallet, Building2, Camera, Scale,
+  Gavel, FileText, Wallet, Building2, Camera, Scale, Inbox,
   Loader2, ChevronRight, AlertTriangle
 } from "lucide-react";
 import { chargerMonProfilHuissier, chargerKpiHuissier } from "./lib/huissier";
+import { compterMandatsEnAttente } from "./lib/mandats";
 
 const fmt = (n) => new Intl.NumberFormat("fr-FR").format(n || 0) + " FCFA";
 
@@ -29,6 +30,7 @@ function Tuile({ icone: Icone, titre, sousTitre, valeur, couleur, onClick }) {
 export default function HuissierDashboard({ onNaviguer }) {
   const [profil, setProfil] = useState(null);
   const [kpi, setKpi] = useState(null);
+  const [nbMandats, setNbMandats] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +40,8 @@ export default function HuissierDashboard({ onNaviguer }) {
       if (p) {
         const k = await chargerKpiHuissier(p.id);
         setKpi(k);
+        const nb = await compterMandatsEnAttente(p.id);
+        setNbMandats(nb);
       }
       setLoading(false);
     })();
@@ -110,6 +114,14 @@ export default function HuissierDashboard({ onNaviguer }) {
 
       {/* 5 tuiles */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Tuile
+          icone={Inbox}
+          titre="Mandats des banques"
+          sousTitre="Dossiers de saisie transmis"
+          valeur={nbMandats}
+          couleur="bg-cyan-600"
+          onClick={() => onNaviguer("huissier_mandats")}
+        />
         <Tuile
           icone={Gavel}
           titre="Mesures conservatoires"
