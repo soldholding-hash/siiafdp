@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Map, Layers, Loader2, TrendingUp } from "lucide-react";
-import { useState as useStateFiche } from "react";
+import { Map, Search, Loader2 } from "lucide-react";
 import FicheParcelle from "./FicheParcelle";
 import { telechargerPlanBornage } from "./lib/pdfPlanBornage";
+
+const getLat = (b) => (Array.isArray(b) ? b[0] : b.lat);
+const getLng = (b) => (Array.isArray(b) ? b[1] : b.lng);
 
 export default function VueCartographie({ parcelles }) {
   const mapRef = useRef(null);
@@ -10,23 +12,21 @@ export default function VueCartographie({ parcelles }) {
   const layersRef = useRef([]);
   const [stats, setStats] = useState({ total: 0, surface: 0, arrondissements: {} });
   const [selectedParcelle, setSelectedParcelle] = useState(null);
+  const [recherche, setRecherche] = useState("");
+  const [message, setMessage] = useState(null);
 
-  // Init carte
   useEffect(() => {
     if (mapInstance.current || !mapRef.current) return;
     const L = window.L;
-    if (!L) { console.error("Leaflet non chargé"); return; }
-
+    if (!L) return;
     const map = L.map(mapRef.current).setView([-4.2634, 15.2429], 12);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap", maxZoom: 19,
     }).addTo(map);
-
     mapInstance.current = map;
     return () => { map.remove(); mapInstance.current = null; };
   }, []);
 
-  // Afficher les parcelles
   useEffect(() => {
     const L = window.L;
     if (!L || !mapInstance.current) return;
@@ -37,10 +37,10 @@ export default function VueCartographie({ parcelles }) {
     const arr = {};
 
     parcelles.forEach((p) => {
-      const poly = p.polygone;
+      const poly = p.polygone || (p.data && p.data.polygone);
       if (!poly || poly.length < 3) return;
 
-      const statut = p.statut || "libre";
+      const statut = p.statut || (p.data && p.data.statut) || "libre";
       const couleurs = {
         titre: { color: "#059669", fill: "#10b981" },
         litige: { color: "#dc2626", fill: "#ef4444" },
@@ -48,31 +48,23 @@ export default function VueCartographie({ parcelles }) {
         libre: { color: "#78716c", fill: "#a8a29e" },
         gage: { color: "#7c3aed", fill: "#8b5cf6" },
         gel_judiciaire: { color: "#4338ca", fill: "#6366f1" },
+        en_attente: { color: "#eab308", fill: "#fde047" },
       };
       const c = couleurs[statut] || couleurs.libre;
 
-      const polygon = L.polygon(poly, {
-        color: c.color, fillColor: c.fill, fillOpacity: 0.4, weight: 2,
+      const coords = poly.map((b) => [getLat(b), getLng(b)]);
+      const polygon = L.polygon(coords, {
+        color: c.color, fillColor: c.fill, fillOpacity: 0.45, weight: 2,
       }).addTo(mapInstance.current);
 
       polygon.on("click", () => setSelectedParcelle(p));
-      polygon.bindPopup(
-        '<div style="font-family: sans-serif; font-size: 12px;">' +
-        '<div style="font-weight: 600; margin-bottom: 4px;">' + p.id + '</div>' +
-        '<div>' + (p.proprietaire || "Non affecté") + '</div>' +
-        (p.arrondissement ? '<div style="color: #666;">' + p.arrondissement + '</div>' : "") +
-        (p.surface_m2 ? '<div style="color: #666;">' + Math.round(p.surface_m2).toLocaleString("fr-FR") + ' m²</div>' : "") +
-        '<div style="margin-top: 4px;"><span style="background: ' + c.fill + '; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">' + statut + '</span></div>' +
-        '</div>'
-      );
-      layersRef.current.push(polygon);
 
-      totalSurface += p.surface_m2 || 0;
-      const a = p.arrondissement || "Inconnu";
+      layersRef.current.push(polygon);
+      totalSurface += (p.surface_m2 || (p.data && p.data.surface_m2) || 0);
+      const a = p.arrondissement || (p.data && p.data.arrondissement) || "Inconnu";
       arr[a] = (arr[a] || 0) + 1;
     });
 
-    // Ajuster la vue aux parcelles sans dézoomer trop (max 15, min 13)
     if (layersRef.current.length > 0) {
       const group = L.featureGroup(layersRef.current);
       const bounds = group.getBounds();
@@ -84,18 +76,72 @@ export default function VueCartographie({ parcelles }) {
     setStats({ total: parcelles.length, surface: totalSurface, arrondissements: arr });
   }, [parcelles]);
 
-  const nbAvecPoly = parcelles.filter((p) => p.polygone && p.polygone.length >= 3).length;
+  function chercher() {
+    const q = recherche.trim().toUpperCase();
+    setMessage(null);
+    if (!q) return;
+    const L = window.L;
+    if (!L || !mapInstance.current) return;
+
+    const ref = parcelles.find((p) => (p.id || "").toUpperCase() === q);
+    if (ref) {
+      const poly = ref.polygone || (ref.data && ref.data.polygone);
+      if (poly && poly.length >= 3) {
+        const coords = poly.map((b) => [getLat(b), getLng(b)]);
+        mapInstance.current.fitBounds(L.latLngBounds(coords), { maxZoom: 19, padding: [60, 60] });
+      } else {
+        const lat = ref.centre_lat || (ref.data && ref.data.centre_lat);
+        const lng = ref.centre_lng || (ref.data && ref.data.centre_lng);
+        if (lat && lng) mapInstance.current.setView([lat, lng], 19);
+      }
+      setSelectedParcelle(ref);
+      setMessage({ ok: true, text: "Parcelle trouvée : " + ref.id });
+      return;
+    }
+
+    const parts = q.split(",").map((s) => parseFloat(s.trim()));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      const [lat, lng] = parts;
+      mapInstance.current.setView([lat, lng], 19);
+      setMessage({ ok: true, text: "Centré sur " + lat.toFixed(5) + ", " + lng.toFixed(5) });
+      return;
+    }
+
+    setMessage({ ok: false, text: "Tapez une référence (P-04140) ou des coordonnées (-4.28, 15.25)" });
+  }
+
+  const nbAvecPoly = parcelles.filter((p) => (p.polygone || (p.data && p.data.polygone))?.length >= 3).length;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-5">
       <div>
         <div className="flex items-center gap-3">
           <Map className="text-purple-700" size={26} />
           <div className="text-2xl font-semibold text-stone-900">Cartographie foncière</div>
         </div>
-        <div className="text-sm text-stone-500 mt-1">
-          Vue globale des parcelles numérisées sur le territoire
+        <div className="text-sm text-stone-500 mt-1">Vue globale des parcelles numérisées sur le territoire</div>
+      </div>
+
+      {/* BARRE DE RECHERCHE */}
+      <div className="bg-white border-2 border-purple-300 rounded-sm p-4 shadow-sm">
+        <div className="flex gap-2">
+          <input
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && chercher()}
+            placeholder="Rechercher une parcelle (P-04140) ou des coordonnées GPS (-4.28, 15.25)"
+            className="flex-1 border border-stone-300 rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <button onClick={chercher}
+            className="text-sm px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-sm flex items-center gap-2 font-medium">
+            <Search size={16} /> Localiser
+          </button>
         </div>
+        {message && (
+          <div className={"text-xs mt-2 p-2 rounded-sm border " + (message.ok ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800")}>
+            {message.text}
+          </div>
+        )}
       </div>
 
       {/* KPI */}
@@ -107,30 +153,25 @@ export default function VueCartographie({ parcelles }) {
         </div>
         <div className="bg-white border border-stone-200 rounded-sm p-4">
           <div className="text-xs font-mono text-stone-500 uppercase">Surface totale</div>
-          <div className="text-2xl font-semibold text-stone-900 mt-2">
-            {Math.round(stats.surface).toLocaleString("fr-FR")} m²
-          </div>
-          <div className="text-xs text-stone-500 mt-1">
-            ≈ {(stats.surface / 10000).toFixed(2)} hectares
-          </div>
+          <div className="text-2xl font-semibold text-stone-900 mt-2">{Math.round(stats.surface).toLocaleString("fr-FR")} m²</div>
+          <div className="text-xs text-stone-500 mt-1">≈ {(stats.surface / 10000).toFixed(2)} hectares</div>
         </div>
         <div className="bg-white border border-stone-200 rounded-sm p-4">
           <div className="text-xs font-mono text-stone-500 uppercase">Arrondissements couverts</div>
-          <div className="text-2xl font-semibold text-stone-900 mt-2">
-            {Object.keys(stats.arrondissements).length}
-          </div>
+          <div className="text-2xl font-semibold text-stone-900 mt-2">{Object.keys(stats.arrondissements).length}</div>
           <div className="text-xs text-stone-500 mt-1">sur le territoire</div>
         </div>
       </div>
 
-      {/* Carte */}
+      {/* CARTE */}
       <div ref={mapRef} className="w-full h-[500px] rounded-sm border border-stone-300" style={{ zIndex: 0 }}></div>
 
-      {/* Légende */}
+      {/* LÉGENDE */}
       <div className="bg-stone-50 border border-stone-200 rounded-sm p-4">
         <div className="text-xs font-mono text-stone-500 uppercase mb-3">Légende</div>
         <div className="flex flex-wrap gap-4 text-xs">
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm" style={{ background: "#10b981" }}></span> Titré</div>
+          <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm" style={{ background: "#fde047" }}></span> En attente</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm" style={{ background: "#ef4444" }}></span> En litige</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm" style={{ background: "#f59e0b" }}></span> Domaine public</div>
           <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm" style={{ background: "#a8a29e" }}></span> Libre</div>
@@ -139,23 +180,20 @@ export default function VueCartographie({ parcelles }) {
         </div>
       </div>
 
-      {/* Détail arrondissements */}
+      {/* RÉPARTITION */}
       {Object.keys(stats.arrondissements).length > 0 && (
         <div className="bg-white border border-stone-200 rounded-sm p-5">
           <div className="text-sm font-semibold mb-3">Répartition par arrondissement</div>
           <div className="space-y-2">
-            {Object.entries(stats.arrondissements)
-              .sort((a, b) => b[1] - a[1])
-              .map(([arr, n]) => (
-                <div key={arr} className="flex items-center gap-3 text-sm">
-                  <div className="w-40 text-stone-700">{arr}</div>
-                  <div className="flex-1 bg-stone-100 rounded-sm h-2 overflow-hidden">
-                    <div className="bg-purple-600 h-full rounded-sm"
-                      style={{ width: (n / Math.max(...Object.values(stats.arrondissements)) * 100) + "%" }} />
-                  </div>
-                  <div className="w-12 text-right font-mono text-xs text-stone-500">{n}</div>
+            {Object.entries(stats.arrondissements).sort((a, b) => b[1] - a[1]).map(([arr, n]) => (
+              <div key={arr} className="flex items-center gap-3 text-sm">
+                <div className="w-40 text-stone-700">{arr}</div>
+                <div className="flex-1 bg-stone-100 rounded-sm h-2 overflow-hidden">
+                  <div className="bg-purple-600 h-full rounded-sm" style={{ width: (n / Math.max(...Object.values(stats.arrondissements)) * 100) + "%" }} />
                 </div>
-              ))}
+                <div className="w-12 text-right font-mono text-xs text-stone-500">{n}</div>
+              </div>
+            ))}
           </div>
         </div>
       )}
