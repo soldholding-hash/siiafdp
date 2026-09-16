@@ -10,6 +10,7 @@ import MesContentieux from "./MesContentieux";
 import VerifierCertificat from "./VerifierCertificat";
 import TableauDeBord from "./TableauDeBord";
 import VueCartographie from "./VueCartographie";
+import ParcellesEnAttente from "./ParcellesEnAttente";
 import ModeTerrain from "./ModeTerrain";
 import { creerParcelleTerrain } from "./lib/terrain";
 import { genererCertificatGage } from "./lib/certificat";
@@ -20,7 +21,7 @@ import {
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
   ChevronRight, X, Landmark, Banknote, Building2, QrCode, Bell, Eye,
   CreditCard, Lock, Send, ArrowLeftRight, Globe, Layers, MapPin, ArrowLeft, Gavel, Download,
-  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation
+  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation, CheckCircle2
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -107,6 +108,7 @@ const NAV = [
   { id: "cartographie", label: "Cartographie GPS", icon: MapPin },
   { id: "mode_terrain", label: "Mode Terrain (GPS)", icon: Navigation },
   { id: "brigade_dashboard", label: "Pilotage Brigade", icon: Compass },
+  { id: "parcelles_attente", label: "Parcelles en attente", icon: CheckCircle2 },
   { id: "titres", label: "Titres fonciers", icon: FileStack },
   { id: "cartes", label: "Cartes foncières", icon: CreditCard },
   { id: "domaine", label: "Domaine public", icon: Landmark },
@@ -138,8 +140,8 @@ const NAV = [
 // saisie opérationnelle des autres services.
 
 const USERS = [
-  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
-  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["cartographie", "titres", "cartes"] },
+  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["parcelles_attente", "mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
+  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["parcelles_attente", "cartographie", "titres", "cartes"] },
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["cartographie", "domaine"] },
   { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
@@ -1042,6 +1044,7 @@ export default function SigefApp() {
           )}
 
           {view === "titres" && <Titres parcelles={parcelles} dossiers={dossiers} />}
+          {view === "parcelles_attente" && <ParcellesEnAttente parcelles={parcelles} onRafraichir={() => window.location.reload()} />}
 
           {view === "cartes" && (
             <CartesFoncieres
