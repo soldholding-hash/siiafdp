@@ -23,6 +23,8 @@ import HuissierMesures from "./HuissierMesures";
 import HuissierCommandements from "./HuissierCommandements";
 import HuissierMandats from "./HuissierMandats";
 import MandaterHuissier from "./MandaterHuissier";
+import Messagerie from "./Messagerie";
+import { compterMessagesNonLus } from "./lib/messagerie";
 import TribunalCommandements from "./TribunalCommandements";
 import ModeTerrain from "./ModeTerrain";
 import { creerParcelleTerrain } from "./lib/terrain";
@@ -34,7 +36,7 @@ import {
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
   ChevronRight, X, Landmark, Banknote, Building2, QrCode, Bell, Eye,
   CreditCard, Lock, Send, ArrowLeftRight, Globe, Layers, MapPin, ArrowLeft, Gavel, Download,
-  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation
+  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation, Mail
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -149,6 +151,7 @@ const NAV = [
   { id: "carte_nationale", label: "Carte nationale", icon: Globe },
   { id: "assistant_ia", label: "Assistant IA", icon: Sparkles },
   { id: "laboratoire", label: "Laboratoire d'Anticipation", icon: Lightbulb },
+  { id: "messagerie", label: "Messagerie", icon: Mail },
   { id: "securigage", label: "Sécuri-Gage Foncier", icon: Lock },
   { id: "judiciaire", label: "Connexion Judiciaire", icon: Scale },
   { id: "gels_judiciaires", label: "Gels judiciaires", icon: Gavel },
@@ -161,21 +164,21 @@ const NAV = [
 // saisie opérationnelle des autres services.
 
 const USERS = [
-  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["parcelles_attente", "mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
-  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["parcelles_attente", "cartes_page", "cartographie", "titres", "cartes"] },
-  { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["cartographie", "domaine"] },
-  { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet"] },
-  { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
-  { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["gels_judiciaires", "dossiers_contentieux", "workflow"] },
-  { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["recharger_partenaire", "tresor"] },
-  { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["dossiers_contentieux", "audit"], readOnly: true },
-  { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["rh"] },
-  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["recharger_partenaire", "validation_ministere", "cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
-  { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
-  { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
-  { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["tgi_commandements", "gels_judiciaires", "mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
-  { username: "huissier.test@sigef.cg", password: "huissier2026", nom: "Me. Jean Huissier", service: "Huissier de justice (Etude 001)", views: ["huissier_dashboard", "huissier_mandats", "huissier_mesures", "huissier_commandements"], isHuissier: true },
-  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["validation_ministere", "cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
+  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["messagerie", "parcelles_attente", "mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
+  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["messagerie", "parcelles_attente", "cartes_page", "cartographie", "titres", "cartes"] },
+  { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["messagerie", "cartographie", "domaine"] },
+  { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["messagerie", "guichet"] },
+  { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["messagerie", "mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
+  { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["messagerie", "gels_judiciaires", "dossiers_contentieux", "workflow"] },
+  { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["messagerie", "recharger_partenaire", "tresor"] },
+  { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["messagerie", "dossiers_contentieux", "audit"], readOnly: true },
+  { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["messagerie", "rh"] },
+  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["messagerie", "recharger_partenaire", "validation_ministere", "cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
+  { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["messagerie", "aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
+  { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["messagerie", "aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
+  { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["messagerie", "tgi_commandements", "gels_judiciaires", "mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
+  { username: "huissier.test@sigef.cg", password: "huissier2026", nom: "Me. Jean Huissier", service: "Huissier de justice (Etude 001)", views: ["messagerie", "huissier_dashboard", "huissier_mandats", "huissier_mesures", "huissier_commandements"], isHuissier: true },
+  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["messagerie", "validation_ministere", "cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
 function rectsOverlap(a, b) {
@@ -223,6 +226,7 @@ export default function SigefApp() {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(null);
+  const [nbMessagesNonLus, setNbMessagesNonLus] = useState(0);
   const [parcelles, setParcelles] = useState([]);
   const [dossiers, setDossiers] = useState([]);
   const [agents] = useState(INITIAL_AGENTS);
@@ -1169,6 +1173,7 @@ export default function SigefApp() {
           {view === "huissier_mesures" && <HuissierMesures />}
           {view === "huissier_commandements" && <HuissierCommandements />}
           {view === "huissier_mandats" && <HuissierMandats />}
+          {view === "messagerie" && <Messagerie />}
           {view === "tgi_commandements" && <TribunalCommandements />}
 
           {view === "judiciaire" && (
