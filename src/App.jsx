@@ -3872,6 +3872,7 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
   const [gagesDB, setGagesDB] = useState([]);
   const [alertes, setAlertes] = useState([]);
   const [signalParcelle, setSignalParcelle] = useState(null);
+  const [mandatParcelle, setMandatParcelle] = useState(null);
 
   useEffect(() => {
     if (!compteId) return;
@@ -4028,8 +4029,27 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
             parcelle={{ id: signalParcelle.parcelle_id, proprietaire: parcelles.find((x) => x.id === signalParcelle.parcelle_id)?.proprietaire }}
             onClose={() => setSignalParcelle(null)}
             onDone={() => {
+              const parcelleConcernee = signalParcelle;
               setSignalParcelle(null);
-              setMsg({ ok: true, text: "Signalement transmis au Ministère (Contentieux). Un dossier a été ouvert." });
+              setMsg({ ok: true, text: "Signalement transmis au Ministère. Vous pouvez maintenant mandater un huissier." });
+              // Ouvrir automatiquement le formulaire de mandat
+              setMandatParcelle(parcelleConcernee);
+            }}
+          />
+        )}
+
+        {mandatParcelle && (
+          <MandaterHuissier
+            parcelle={{
+              id: mandatParcelle.parcelle_id,
+              proprietaire: parcelles.find((x) => x.id === mandatParcelle.parcelle_id)?.proprietaire
+            }}
+            banqueCompteId={currentUser.compteId}
+            banqueNom={currentUser.banque || currentUser.service}
+            onClose={() => setMandatParcelle(null)}
+            onDone={(m) => {
+              setMandatParcelle(null);
+              setMsg({ ok: true, text: "Mandat " + m.reference + " transmis à l'huissier. Il vous répondra dans son espace." });
             }}
           />
         )}
