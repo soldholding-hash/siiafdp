@@ -100,6 +100,7 @@ const STATUT_STYLE = {
   libre: { label: "Libre", bg: "bg-stone-200", text: "text-stone-700", dot: "bg-stone-500" },
   gage: { label: "Sous hypothèque", bg: "bg-purple-100", text: "text-purple-800", dot: "bg-purple-600" },
   gel_judiciaire: { label: "Gel judiciaire", bg: "bg-indigo-100", text: "text-indigo-800", dot: "bg-indigo-600" },
+  en_attente_ministre: { label: "En attente Ministère", bg: "bg-amber-100", text: "text-amber-800", dot: "bg-amber-600" },
 };
 
 const NAV = [
@@ -1942,7 +1943,7 @@ function TitreSecurise({ parcelle, dossier }) {
 }
 
 function Titres({ parcelles, dossiers }) {
-  const titrees = parcelles.filter((p) => p.statut === "titre" || p.statut === "litige" || p.statut === "gage");
+  const titrees = parcelles.filter((p) => p.statut === "titre" || p.statut === "litige" || p.statut === "gage" || p.statut === "en_attente_ministre");
   const [expanded, setExpanded] = useState(null);
   return (
     <div className="bg-white border border-stone-200 rounded-sm p-5">
@@ -1950,7 +1951,7 @@ function Titres({ parcelles, dossiers }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-stone-500 border-b border-stone-200 font-mono text-xs uppercase">
-            <th className="pb-2">Parcelle</th><th>Propriétaire</th><th>Commune</th><th>Superficie</th><th>Statut</th><th>Dossier lié</th><th></th>
+            <th className="pb-2">Parcelle</th><th>N° Titre</th><th>Propriétaire</th><th>Commune</th><th>Superficie</th><th>Statut</th><th>Dossier lié</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -1961,6 +1962,7 @@ function Titres({ parcelles, dossiers }) {
               <Fragment key={p.id}>
                 <tr className="border-b border-stone-100">
                   <td className="py-2.5 font-mono text-xs">{p.id}</td>
+                  <td className="font-mono text-xs text-purple-700 font-semibold">{p.numero_titre || "—"}</td>
                   <td>{p.proprietaire}</td>
                   <td className="text-stone-600">{p.commune}</td>
                   <td className="text-stone-600">{p.superficie} m²</td>
@@ -1976,7 +1978,7 @@ function Titres({ parcelles, dossiers }) {
                 </tr>
                 {expanded === p.id && delivre && (
                   <tr>
-                    <td colSpan={7}><TitreSecurise parcelle={p} dossier={dossier} /></td>
+                    <td colSpan={8}><TitreSecurise parcelle={p} dossier={dossier} /></td>
                   </tr>
                 )}
               </Fragment>

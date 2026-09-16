@@ -24,7 +24,7 @@ export default function ParcellesEnAttente({ parcelles, onRafraichir }) {
 
   const enAttente = (parcelles || []).filter((p) => {
     const data = p.data || p;
-    return data.statut === "en_attente" && (data.polygone?.length >= 3);
+    return (data.statut === "en_attente" || data.statut === "en_attente_ministre") && (data.polygone?.length >= 3);
   });
 
   async function valider() {
