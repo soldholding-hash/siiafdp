@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   FileText, Plus, Loader2, X, Upload, Bell, Calendar, Check,
-  ExternalLink, AlertCircle
+  ExternalLink, AlertCircle, Award
 } from "lucide-react";
 import {
   chargerMonProfilHuissier,
@@ -9,7 +9,10 @@ import {
   creerCommandement,
   uploaderDocumentHuissier,
   notifierCommandement,
+  enregistrerCertificat,
+  uploaderBlobHuissier,
 } from "./lib/huissier";
+import { genererCertificatCommandement } from "./lib/pdfCertificatHuissier";
 
 const STATUT_INFO = {
   actif: { label: "Actif", couleur: "bg-orange-100 text-orange-800" },
@@ -279,6 +282,32 @@ export default function HuissierCommandements() {
     setTimeout(() => setMsg(null), 3000);
   }
 
+  async function delivrerCertificat(c, typeCertificat) {
+    if (!profil) return;
+    try {
+      setMsg({ ok: true, text: "Génération du certificat..." });
+      const { doc, hash } = await genererCertificatCommandement({
+        huissier: profil,
+        commandement: c,
+        typeCertificat,
+      });
+      // Générer le blob PDF
+      const blob = doc.output("blob");
+      // Upload vers Storage
+      const up = await uploaderBlobHuissier(blob, `commandements/${profil.id}`);
+      if (up.ok) {
+        await enregistrerCertificat(c.id, up.url, hash);
+      }
+      // Télécharger localement
+      doc.save(`certificat-${c.parcelle_id}-${hash}.pdf`);
+      setMsg({ ok: true, text: `Certificat délivré — réf. HUIS-${hash}` });
+      await charger();
+      setTimeout(() => setMsg(null), 5000);
+    } catch (e) {
+      setMsg({ ok: false, text: "Erreur certificat : " + e.message });
+    }
+  }
+
   async function apresNotification() {
     setNotifCible(null);
     setMsg({ ok: true, text: "Commandement notifié." });
@@ -359,11 +388,25 @@ export default function HuissierCommandements() {
                           <Bell size={11} /> Notifier
                         </button>
                       )}
+                      {c.statut === "notifie" && (
+                        <button onClick={() => delivrerCertificat(c, "non_contestation")}
+                          className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center gap-1"
+                          title="Délivrer un certificat de non-contestation">
+                          <Award size={11} /> Certificat
+                        </button>
+                      )}
                       {c.statut === "notifie" && c.notifie_le && (
                         <div className="text-xs text-stone-500 inline-flex items-center gap-1">
                           <Calendar size={11} />
                           {new Date(c.notifie_le).toLocaleDateString("fr-FR")}
                         </div>
+                      )}
+                      {c.certificat_url && (
+                        <a href={c.certificat_url} target="_blank" rel="noreferrer"
+                          className="text-xs px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-sm inline-flex items-center gap-1"
+                          title="Certificat délivré">
+                          <Award size={11} />
+                        </a>
                       )}
                     </div>
                   </td>

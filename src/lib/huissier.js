@@ -228,3 +228,34 @@ export async function notifierCommandement(commandementId, payload) {
   if (error) return { ok: false, raison: error.message };
   return { ok: true, commandement: data };
 }
+
+// ============================================
+// CERTIFICATS D'HUISSIER
+// ============================================
+
+export async function enregistrerCertificat(commandementId, certificatUrl, hash) {
+  const { data, error } = await supabase
+    .from("commandements")
+    .update({
+      certificat_url: certificatUrl,
+      certificat_hash: hash,
+      certificat_delivre_le: new Date().toISOString(),
+    })
+    .eq("id", commandementId)
+    .select()
+    .single();
+  if (error) return { ok: false, raison: error.message };
+  return { ok: true, commandement: data };
+}
+
+export async function uploaderBlobHuissier(blob, prefix) {
+  const path = `${prefix}/${Date.now()}-certificat.pdf`;
+  const { error } = await supabase.storage
+    .from("huissier-documents")
+    .upload(path, blob, { upsert: false, contentType: "application/pdf" });
+  if (error) return { ok: false, raison: error.message };
+  const { data: urlData } = supabase.storage
+    .from("huissier-documents")
+    .getPublicUrl(path);
+  return { ok: true, path, url: urlData?.publicUrl };
+}
