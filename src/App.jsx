@@ -21,6 +21,8 @@ import AMLBanque from "./AMLBanque";
 import HuissierDashboard from "./HuissierDashboard";
 import HuissierMesures from "./HuissierMesures";
 import HuissierCommandements from "./HuissierCommandements";
+import HuissierMandats from "./HuissierMandats";
+import MandaterHuissier from "./MandaterHuissier";
 import TribunalCommandements from "./TribunalCommandements";
 import ModeTerrain from "./ModeTerrain";
 import { creerParcelleTerrain } from "./lib/terrain";
@@ -172,7 +174,7 @@ const USERS = [
   { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
   { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
   { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["tgi_commandements", "gels_judiciaires", "mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
-  { username: "huissier.test@sigef.cg", password: "huissier2026", nom: "Me. Jean Huissier", service: "Huissier de justice (Etude 001)", views: ["huissier_dashboard", "huissier_mesures", "huissier_commandements"], isHuissier: true },
+  { username: "huissier.test@sigef.cg", password: "huissier2026", nom: "Me. Jean Huissier", service: "Huissier de justice (Etude 001)", views: ["huissier_dashboard", "huissier_mandats", "huissier_mesures", "huissier_commandements"], isHuissier: true },
   { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["validation_ministere", "cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
@@ -1166,6 +1168,7 @@ export default function SigefApp() {
           {view === "huissier_dashboard" && <HuissierDashboard onNaviguer={setView} />}
           {view === "huissier_mesures" && <HuissierMesures />}
           {view === "huissier_commandements" && <HuissierCommandements />}
+          {view === "huissier_mandats" && <HuissierMandats />}
           {view === "tgi_commandements" && <TribunalCommandements />}
 
           {view === "judiciaire" && (
