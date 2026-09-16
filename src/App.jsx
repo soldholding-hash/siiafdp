@@ -278,7 +278,7 @@ export default function SigefApp() {
       hydrated.current = true;
       setDataReady(true);
     });
-  }, [currentUser?.tenantId]);
+  }, [currentUser]);
 
   // Synchronisation automatique : toute modification de ces collections
   // est répercutée vers Supabase, best-effort, sans bloquer l'interface.
@@ -915,17 +915,8 @@ export default function SigefApp() {
 
   if (!dataReady) {
     return (
-      <div className="min-h-screen w-full bg-stone-900 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-stone-800 border border-stone-700 rounded-sm p-4 text-stone-300 text-xs font-mono space-y-2">
-          <div className="text-amber-400 font-semibold">⏳ Chargement du registre…</div>
-          <div>user: <span className="text-emerald-400">{currentUser?.username || "—"}</span></div>
-          <div>role: <span className="text-emerald-400">{currentUser?.banqueRole || "—"}</span></div>
-          <div>tenantId: <span className={currentUser?.tenantId ? "text-red-400" : "text-emerald-400"}>{String(currentUser?.tenantId || "undefined")}</span></div>
-          <div>isHuissier: <span className="text-emerald-400">{String(currentUser?.isHuissier || false)}</span></div>
-          <div className="pt-2 border-t border-stone-700 text-stone-500">
-            Si tenantId est rouge, c'est lui qui bloque. Sinon, l'erreur est dans loadAll.
-          </div>
-        </div>
+      <div className="min-h-screen w-full bg-stone-900 flex items-center justify-center">
+        <div className="text-stone-400 text-sm font-mono">Chargement du registre…</div>
       </div>
     );
   }
