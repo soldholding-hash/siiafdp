@@ -286,7 +286,7 @@ function ModalLire({ message, onClose, onMarquerLu }) {
 }
 
 // ---------- Composant principal ----------
-export default function Messagerie() {
+export default function Messagerie({ currentUser }) {
   const [onglet, setOnglet] = useState("recus");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -298,8 +298,8 @@ export default function Messagerie() {
   async function charger() {
     setLoading(true);
     let data = [];
-    if (onglet === "recus") data = await listerMessagesRecus("tous");
-    else if (onglet === "non_lus") data = await listerMessagesRecus("non_lus");
+    if (onglet === "recus") data = await listerMessagesRecus("tous", currentUser?.username);
+    else if (onglet === "non_lus") data = await listerMessagesRecus("non_lus", currentUser?.username);
     else if (onglet === "envoyes") data = await listerMessagesEnvoyes();
     setMessages(data);
     setLoading(false);

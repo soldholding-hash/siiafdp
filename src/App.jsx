@@ -1173,7 +1173,7 @@ export default function SigefApp() {
           {view === "huissier_mesures" && <HuissierMesures />}
           {view === "huissier_commandements" && <HuissierCommandements />}
           {view === "huissier_mandats" && <HuissierMandats />}
-          {view === "messagerie" && <Messagerie />}
+          {view === "messagerie" && <Messagerie currentUser={currentUser} />}
           {view === "tgi_commandements" && <TribunalCommandements />}
 
           {view === "judiciaire" && (

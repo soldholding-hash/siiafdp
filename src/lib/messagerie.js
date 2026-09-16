@@ -29,17 +29,20 @@ export async function envoyerMessage({
 // LIRE LA BOÎTE DE RÉCEPTION
 // ============================================
 
-export async function listerMessagesRecus(filtre = "tous") {
+export async function listerMessagesRecus(filtre = "tous", roleForce = null) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  // Récupère le rôle de l'utilisateur
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-  const role = profile?.role;
+  // Rôle : priorité au rôle passé en paramètre (depuis USERS en dur)
+  let role = roleForce;
+  if (!role) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    role = profile?.role;
+  }
 
   let query = supabase
     .from("message_destinataires")
