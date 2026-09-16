@@ -4033,14 +4033,13 @@ function SecuriGage({ parcelles, cartes, banque, compteId, readOnly, onPoserGage
               const pData = signalParcelle;
               setSignalParcelle(null);
               setMsg({ ok: true, text: "Signalement transmis au Ministère. Vous pouvez maintenant mandater un huissier." });
-              // DEBUG_DESACTIVE : ouverture auto du mandat désactivée
-              console.log("DEBUG parcelle signalée :", JSON.stringify(pData));
-              // setTimeout(() => {
-              //   setMandatParcelle({
-              //     parcelle_id: pData?.parcelle_id || pData?.id,
-              //     _raw: pData
-              //   });
-              // }, 100);
+              // ✅ Réactivation : ouvrir le mandat après 200ms
+              setTimeout(() => {
+                setMandatParcelle({
+                  parcelle_id: pData?.parcelle_id || pData?.id,
+                  _raw: pData
+                });
+              }, 200);
             }}
           />
         )}
