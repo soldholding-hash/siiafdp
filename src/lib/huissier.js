@@ -192,3 +192,39 @@ export async function chargerKpiHuissier(huissierId) {
     sequestre: s.data?.solde_disponible || 0,
   };
 }
+
+// ============================================
+// NOTIFICATION & DOCUMENTS
+// ============================================
+
+export async function uploaderDocumentHuissier(file, prefix) {
+  if (!file) return { ok: false, raison: "Aucun fichier" };
+  const ext = file.name.split(".").pop();
+  const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage
+    .from("huissier-documents")
+    .upload(path, file, { upsert: false });
+  if (error) return { ok: false, raison: error.message };
+  const { data: urlData } = supabase.storage
+    .from("huissier-documents")
+    .getPublicUrl(path);
+  return { ok: true, path, url: urlData?.publicUrl };
+}
+
+export async function notifierCommandement(commandementId, payload) {
+  const { data, error } = await supabase
+    .from("commandements")
+    .update({
+      statut: "notifie",
+      notifie_le: new Date().toISOString(),
+      notifie_a: payload.notifie_a,
+      mode_notification: payload.mode_notification,
+      document_pdf_url: payload.document_pdf_url,
+      observation: payload.observation || null,
+    })
+    .eq("id", commandementId)
+    .select()
+    .single();
+  if (error) return { ok: false, raison: error.message };
+  return { ok: true, commandement: data };
+}
