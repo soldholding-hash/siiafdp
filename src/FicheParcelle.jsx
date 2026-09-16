@@ -4,20 +4,26 @@ import { X, Download, MapPin, Ruler, Calendar, User, Hash, FileText } from "luci
 // Nomme les bornes A, B, C, D...
 const lettre = (i) => String.fromCharCode(65 + (i % 26));
 
+const getLat = (b) => Array.isArray(b) ? b[0] : b.lat;
+const getLng = (b) => Array.isArray(b) ? b[1] : b.lng;
+
+
 // Distance en mètres entre 2 points GPS
 function distanceEntre(p1, p2) {
   const R = 6371000;
-  const dLat = ((p2[0] - p1[0]) * Math.PI) / 180;
-  const dLng = ((p2[1] - p1[1]) * Math.PI) / 180;
-  const lat0 = ((p1[0] + p2[0]) / 2) * Math.PI / 180;
+  const lat1 = getLat(p1), lng1 = getLng(p1);
+  const lat2 = getLat(p2), lng2 = getLng(p2);
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const lat0 = ((lat1 + lat2) / 2) * Math.PI / 180;
   return Math.sqrt((dLat * R) ** 2 + (dLng * R * Math.cos(lat0)) ** 2);
 }
 
 // Normalise un polygone GPS en coordonnées SVG dans un viewBox 600x400
 function normaliserPolygone(bornes) {
   if (!bornes || bornes.length < 2) return [];
-  const lats = bornes.map((b) => b[0]);
-  const lngs = bornes.map((b) => b[1]);
+  const lats = bornes.map((b) => getLat(b));
+  const lngs = bornes.map((b) => getLng(b));
   const minLat = Math.min(...lats), maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
   const largeur = maxLng - minLng || 0.0001;
@@ -198,8 +204,8 @@ export default function FicheParcelle({ parcelle, onClose, onTelecharger }) {
                   {bornes.map((b, i) => (
                     <tr key={i} className="border-b border-stone-100">
                       <td className="py-2 px-4 font-semibold text-purple-700">{lettre(i)}</td>
-                      <td className="py-2 px-4 font-mono">{b[0].toFixed(6)}</td>
-                      <td className="py-2 px-4 font-mono">{b[1].toFixed(6)}</td>
+                      <td className="py-2 px-4 font-mono">{getLat(b).toFixed(6)}</td>
+                      <td className="py-2 px-4 font-mono">{getLng(b).toFixed(6)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -3,20 +3,27 @@ import QRCode from "qrcode";
 
 const lettre = (i) => String.fromCharCode(65 + (i % 26));
 
+const getLat = (b) => Array.isArray(b) ? b[0] : b.lat;
+const getLng = (b) => Array.isArray(b) ? b[1] : b.lng;
+
+
+
 // Distance en mètres entre 2 points GPS
 function distanceEntre(p1, p2) {
   const R = 6371000;
-  const dLat = ((p2[0] - p1[0]) * Math.PI) / 180;
-  const dLng = ((p2[1] - p1[1]) * Math.PI) / 180;
-  const lat0 = ((p1[0] + p2[0]) / 2) * Math.PI / 180;
+  const lat1 = getLat(p1), lng1 = getLng(p1);
+  const lat2 = getLat(p2), lng2 = getLng(p2);
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const lat0 = ((lat1 + lat2) / 2) * Math.PI / 180;
   return Math.sqrt((dLat * R) ** 2 + (dLng * R * Math.cos(lat0)) ** 2);
 }
 
 // Azimut (en degrés depuis le Nord)
 function azimutEntre(p1, p2) {
-  const dLng = (p2[1] - p1[1]) * Math.PI / 180;
-  const lat1 = p1[0] * Math.PI / 180;
-  const lat2 = p2[0] * Math.PI / 180;
+  const dLng = (getLng(p2) - getLng(p1)) * Math.PI / 180;
+  const lat1 = getLat(p1) * Math.PI / 180;
+  const lat2 = getLat(p2) * Math.PI / 180;
   const y = Math.sin(dLng) * Math.cos(lat2);
   const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
   const az = Math.atan2(y, x) * 180 / Math.PI;
@@ -27,10 +34,10 @@ function azimutEntre(p1, p2) {
 function calculerSurface(points) {
   if (points.length < 3) return 0;
   const R = 6371000;
-  const lat0 = (points.reduce((s, p) => s + p[0], 0) / points.length) * Math.PI / 180;
+  const lat0 = (points.reduce((s, p) => s + getLat(p), 0) / points.length) * Math.PI / 180;
   const pts = points.map((p) => [
-    ((p[1] - points[0][1]) * Math.PI / 180) * R * Math.cos(lat0),
-    ((p[0] - points[0][0]) * Math.PI / 180) * R,
+    ((getLng(p) - getLng(points[0])) * Math.PI / 180) * R * Math.cos(lat0),
+    ((getLat(p) - getLat(points[0])) * Math.PI / 180) * R,
   ]);
   let area = 0;
   for (let i = 0; i < pts.length; i++) {
@@ -53,8 +60,8 @@ function calculerPerimetre(points) {
 // Normaliser le polygone en coordonnées SVG
 function normaliserPolygone(bornes) {
   if (!bornes || bornes.length < 2) return [];
-  const lats = bornes.map((b) => b[0]);
-  const lngs = bornes.map((b) => b[1]);
+  const lats = bornes.map((b) => getLat(b));
+  const lngs = bornes.map((b) => getLng(b));
   const minLat = Math.min(...lats), maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
   const largeur = maxLng - minLng || 0.0001;
@@ -64,8 +71,8 @@ function normaliserPolygone(bornes) {
   const offsetX = (W - largeur * scale) / 2;
   const offsetY = (H - hauteur * scale) / 2;
   return bornes.map((b) => [
-    offsetX + (b[1] - minLng) * scale,
-    H - offsetY - (b[0] - minLat) * scale,
+    offsetX + (getLng(b) - minLng) * scale,
+    H - offsetY - (getLat(b) - minLat) * scale,
   ]);
 }
 
@@ -102,8 +109,8 @@ export async function telechargerPlanBornage(parcelle) {
 
   const centre = bornes.length > 0
     ? [
-        bornes.reduce((s, p) => s + p[0], 0) / bornes.length,
-        bornes.reduce((s, b) => s + b[1], 0) / bornes.length,
+        bornes.reduce((s, p) => s + getLat(p), 0) / bornes.length,
+        bornes.reduce((s, p) => s + getLng(p), 0) / bornes.length,
       ]
     : [0, 0];
   const perimetre = calculerPerimetre(bornes);
@@ -117,7 +124,7 @@ export async function telechargerPlanBornage(parcelle) {
   const chaine = [
     parcelle.id,
     data.arrondissement || "",
-    bornes.map((b) => b[0].toFixed(6) + "," + b[1].toFixed(6)).join("|"),
+    bornes.map((b) => getLat(b).toFixed(6) + "," + getLng(b).toFixed(6)).join("|"),
     surface.toFixed(2),
   ].join("#");
   const hash = await sha256(chaine);
@@ -375,9 +382,48 @@ export async function telechargerPlanBornage(parcelle) {
     doc.rect(M, y, W - 2 * M, 5, "F");
     doc.setTextColor(20, 20, 20);
     doc.text(lettre(i), colB[0] + 5, y + 3.5);
-    doc.text(b[0].toFixed(6), colB[1] + 2, y + 3.5);
-    doc.text(b[1].toFixed(6), colB[2] + 2, y + 3.5);
-    doc.text("± 5 m", colB[3] + 2, y + 3.5);
+    doc.text(getLat(b).toFixed(6), colB[1] + 2, y + 3.5);
+    doc.text(getLng(b).toFixed(6), colB[2] + 2, y + 3.5);
+    const acc = b.accuracy ? "± " + Math.round(b.accuracy) + " m" : "—";
+    doc.text(acc, colB[3] + 2, y + 3.5);
+    y += 5;
+  });
+
+  // Tableau 1bis : Métadonnées satellites
+  y += 8;
+  doc.setFont("times", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(20, 20, 20);
+  doc.text("1bis. MÉTADONNÉES SATELLITES (par borne)", M, y);
+  y += 5;
+
+  const colM = [M, M + 15, M + 35, M + 55, M + 75, M + 95];
+  doc.setFillColor(240, 240, 240);
+  doc.rect(M, y, W - 2 * M, 6, "F");
+  doc.setFont("times", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(60, 60, 60);
+  doc.text("Borne", colM[0] + 2, y + 4);
+  doc.text("Altitude (m)", colM[1] + 2, y + 4);
+  doc.text("Préc. alt. (m)", colM[2] + 2, y + 4);
+  doc.text("Cap (°)", colM[3] + 2, y + 4);
+  doc.text("Vitesse (m/s)", colM[4] + 2, y + 4);
+  doc.text("Horodatage", colM[5] + 2, y + 4);
+  y += 6;
+
+  doc.setFont("courier", "normal");
+  doc.setFontSize(7);
+  bornes.forEach((b, i) => {
+    doc.setFillColor(i % 2 === 0 ? 255 : 248, i % 2 === 0 ? 255 : 248, i % 2 === 0 ? 255 : 248);
+    doc.rect(M, y, W - 2 * M, 5, "F");
+    doc.setTextColor(20, 20, 20);
+    doc.text(lettre(i), colM[0] + 5, y + 3.5);
+    doc.text(b.altitude != null ? b.altitude.toFixed(1) : "—", colM[1] + 2, y + 3.5);
+    doc.text(b.altitudeAccuracy != null ? "± " + Math.round(b.altitudeAccuracy) : "—", colM[2] + 2, y + 3.5);
+    doc.text(b.heading != null ? b.heading.toFixed(0) : "—", colM[3] + 2, y + 3.5);
+    doc.text(b.speed != null ? b.speed.toFixed(2) : "—", colM[4] + 2, y + 3.5);
+    const ts = b.timestamp ? new Date(b.timestamp).toLocaleTimeString("fr-FR") : "—";
+    doc.text(ts, colM[5] + 2, y + 3.5);
     y += 5;
   });
 

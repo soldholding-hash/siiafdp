@@ -4,10 +4,12 @@ import { Navigation, MapPin, Play, Square, RotateCcw, Check, Ruler } from "lucid
 function calculerSurfaceM2(points) {
   if (points.length < 3) return 0;
   const R = 6371000;
-  const lat0 = (points.reduce((s, p) => s + p[0], 0) / points.length) * Math.PI / 180;
+  const getLat = (p) => Array.isArray(p) ? p[0] : p.lat;
+  const getLng = (p) => Array.isArray(p) ? p[1] : p.lng;
+  const lat0 = (points.reduce((s, p) => s + getLat(p), 0) / points.length) * Math.PI / 180;
   const pts = points.map((p) => [
-    ((p[1] - points[0][1]) * Math.PI / 180) * R * Math.cos(lat0),
-    ((p[0] - points[0][0]) * Math.PI / 180) * R,
+    ((getLng(p) - getLng(points[0])) * Math.PI / 180) * R * Math.cos(lat0),
+    ((getLat(p) - getLat(points[0])) * Math.PI / 180) * R,
   ]);
   let area = 0;
   for (let i = 0; i < pts.length; i++) {
@@ -73,6 +75,12 @@ export default function ModeTerrain({ onEnregistrer, onRetour }) {
     watchRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const p = [pos.coords.latitude, pos.coords.longitude];
+        p.altitude = pos.coords.altitude;
+        p.accuracy = pos.coords.accuracy;
+        p.altitudeAccuracy = pos.coords.altitudeAccuracy;
+        p.heading = pos.coords.heading;
+        p.speed = pos.coords.speed;
+        p.timestamp = pos.timestamp;
         setPosition(p);
         setPrecision(pos.coords.accuracy);
         const L = window.L;
@@ -116,7 +124,8 @@ export default function ModeTerrain({ onEnregistrer, onRetour }) {
     layersRef.current = [];
 
     bornes.forEach((p, i) => {
-      const m = L.circleMarker(p, {
+      const coords = Array.isArray(p) ? p : [p.lat, p.lng];
+      const m = L.circleMarker(coords, {
         radius: 6, color: "#7c3aed", weight: 3,
         fillColor: "#a78bfa", fillOpacity: 1,
       }).bindTooltip(`Borne ${lettre(i)}`).addTo(mapInstance.current);
@@ -159,7 +168,22 @@ export default function ModeTerrain({ onEnregistrer, onRetour }) {
 
   function enregistrerBorne() {
     if (!position) { alert("Attendez d'avoir une position GPS valide"); return; }
-    setBornes([...bornes, position]);
+
+    // Capture TOUTES les métadonnées satellites disponibles
+    const gpsMeta = {
+      lat: position[0],
+      lng: position[1],
+      altitude: position.altitude !== null && position.altitude !== undefined ? position.altitude : null,
+      accuracy: position.accuracy !== null && position.accuracy !== undefined ? position.accuracy : null,
+      altitudeAccuracy: position.altitudeAccuracy !== null && position.altitudeAccuracy !== undefined ? position.altitudeAccuracy : null,
+      heading: position.heading !== null && position.heading !== undefined ? position.heading : null,
+      speed: position.speed !== null && position.speed !== undefined ? position.speed : null,
+      timestamp: position.timestamp || Date.now(),
+      source: "GPS_GNSS",
+      datum: "WGS84",
+    };
+
+    setBornes([...bornes, gpsMeta]);
   }
 
   function annulerDerniere() {
