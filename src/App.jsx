@@ -13,7 +13,7 @@ import VueCartographie from "./VueCartographie";
 import ParcellesEnAttente from "./ParcellesEnAttente";
 import { telechargerTitreFoncier } from "./lib/pdfTitreFoncier";
 import ValidationMinistere from "./ValidationMinistere";
-import CartesFoncieres from "./CartesFoncieres";
+import RegistreCartes from "./RegistreCartes";
 import ModeTerrain from "./ModeTerrain";
 import { creerParcelleTerrain } from "./lib/terrain";
 import { genererCertificatGage } from "./lib/certificat";
@@ -1053,7 +1053,7 @@ export default function SigefApp() {
           {view === "parcelles_attente" && <ParcellesEnAttente parcelles={parcelles} onRafraichir={() => window.location.reload()} />}
           {view === "validation_ministere" && <ValidationMinistere parcelles={parcelles} onRafraichir={() => window.location.reload()} />}
 
-          {view === "cartes_page" && <CartesFoncieres />}
+          {view === "cartes_page" && <RegistreCartes />}
 
           {view === "cartes" && (
             <CartesFoncieres
