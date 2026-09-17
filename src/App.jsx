@@ -25,6 +25,7 @@ import HuissierMandats from "./HuissierMandats";
 import MandaterHuissier from "./MandaterHuissier";
 import Messagerie from "./Messagerie";
 import AppelVoIP from "./AppelVoIP";
+import ConservateurValidations from "./ConservateurValidations";
 import { compterMessagesNonLus } from "./lib/messagerie";
 import TribunalCommandements from "./TribunalCommandements";
 import ModeTerrain from "./ModeTerrain";
@@ -161,6 +162,7 @@ const NAV = [
   { id: "huissier_mandats", label: "Mes mandats", icon: Inbox },
   { id: "huissier_mesures", label: "Mesures conservatoires", icon: Gavel },
   { id: "huissier_commandements", label: "Commandements", icon: FileText },
+  { id: "conservateur_validations", label: "Validations Ministère", icon: ShieldCheck },
 ];
 
 // ---------- comptes de service & droits d'accès ----------
@@ -170,7 +172,7 @@ const NAV = [
 
 const USERS = [
   { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["messagerie", "parcelles_attente", "mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
-  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["messagerie", "parcelles_attente", "cartes_page", "cartographie", "titres", "cartes"] },
+  { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["conservateur_validations", "messagerie", "parcelles_attente", "cartes_page", "cartographie", "titres", "cartes"] },
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["messagerie", "cartographie", "domaine"] },
   { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["messagerie", "guichet"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["messagerie", "mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
@@ -183,7 +185,7 @@ const USERS = [
   { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["messagerie", "aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
   { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["messagerie", "tgi_commandements", "gels_judiciaires", "mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
   { username: "huissier.test@sigef.cg", password: "huissier2026", nom: "Me. Jean Huissier", service: "Huissier de justice (Etude 001)", views: ["messagerie", "huissier_dashboard", "huissier_mandats", "huissier_mesures", "huissier_commandements"], isHuissier: true },
-  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["messagerie", "validation_ministere", "cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
+  { username: "ministre", password: "ministre2026", nom: "Le Ministre", service: "Cabinet du Ministre", views: ["conservateur_validations", "messagerie", "validation_ministere", "cartographie", "dashboard", "cadastre", "titres", "cartes", "domaine", "guichet", "guichet_externe", "workflow", "dossiers_contentieux", "tresor", "comptes", "audit", "rh", "rapports", "carte_nationale", "assistant_ia", "laboratoire", "securigage", "judiciaire", "aml"], readOnly: true },
 ];
 
 function rectsOverlap(a, b) {
@@ -1179,6 +1181,7 @@ export default function SigefApp() {
           {view === "huissier_commandements" && <HuissierCommandements />}
           {view === "huissier_mandats" && <HuissierMandats />}
           {view === "messagerie" && <Messagerie currentUser={currentUser} />}
+          {view === "conservateur_validations" && <ConservateurValidations currentUser={currentUser} />}
 
           {/* VoIP - Appels internes */}
           {currentUser && <AppelVoIP currentUser={currentUser} />}
