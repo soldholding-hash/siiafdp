@@ -89,6 +89,16 @@ export async function transmettreTresor(demandeId, agentNom, montant) {
 // ============================================
 
 export async function validerPaiement(demandeId, agentNom, referenceQuittance) {
+  // Récupérer la demande pour connaître le montant et les infos
+  const { data: demande } = await supabase
+    .from("demandes")
+    .select("*")
+    .eq("id", demandeId)
+    .single();
+  
+  if (!demande) return { ok: false, raison: "Demande introuvable" };
+
+  // Mettre à jour la demande
   const { error } = await supabase
     .from("demandes")
     .update({
@@ -101,12 +111,27 @@ export async function validerPaiement(demandeId, agentNom, referenceQuittance) {
     .eq("id", demandeId);
   if (error) return { ok: false, raison: error.message };
 
+  // Créer une ligne dans encaissements (pour les rapports Trésor)
+  try {
+    await supabase.from("encaissements").insert({
+      dossier_id: demande.reference,
+      type: "Frais de " + (demande.type_demande || "demande"),
+      montant: demande.montant_frais || 0,
+      mode: "Espèces / Mobile Money",
+      date: new Date().toISOString().slice(0, 10),
+    });
+  } catch (e) {
+    console.error("Erreur création encaissement:", e);
+    // On ne bloque pas la validation si l'encaissement échoue
+  }
+
+  // Log dans le journal
   await supabase.from("etapes_demandes").insert({
     demande_id: demandeId,
     etape: "paiement",
     acteur_nom: agentNom,
     acteur_role: "tresor",
-    observation: `Paiement validé — quittance n° ${referenceQuittance}`,
+    observation: `Paiement validé — quittance n° ${referenceQuittance} — ${demande.montant_frais} FCFA`,
   });
 
   return { ok: true };
