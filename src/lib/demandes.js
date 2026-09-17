@@ -190,3 +190,31 @@ export async function transmettreTopographe(demandeId, agentNom) {
 
   return { ok: true };
 }
+
+// ============================================
+// VALIDER LE LEVÉ (Topographe)
+// ============================================
+export async function validerLeveTopographe(demandeId, agentNom, rapportUrl, observations) {
+  const { error } = await supabase
+    .from("demandes")
+    .update({
+      statut: "transmis_conservation",
+      rapport_topo_url: rapportUrl,
+      date_leve: new Date().toISOString(),
+      observations_topo: observations,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", demandeId);
+
+  if (error) return { ok: false, raison: error.message };
+
+  await supabase.from("etapes_demandes").insert({
+    demande_id: demandeId,
+    etape: "leve_topographique",
+    acteur_nom: agentNom,
+    acteur_role: "topographe",
+    observation: "Levé topographique validé et transmis à la conservation",
+  });
+
+  return { ok: true };
+}
