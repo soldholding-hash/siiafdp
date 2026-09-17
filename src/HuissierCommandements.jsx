@@ -263,6 +263,80 @@ function ModalNotification({ commandement, onClose, onDone }) {
 }
 
 // ---------- Composant principal ----------
+// ---------- Modal : Transmettre au Ministère ----------
+function ModalTransmettreMinistere({ commandement, onClose, onDone }) {
+  const [motif, setMotif] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState(null);
+
+  async function valider() {
+    if (!motif.trim()) { setErr("Motif obligatoire"); return; }
+    setLoading(true);
+    const res = await transmettreMinistere(commandement.id, {
+      parcelle_id: commandement.parcelle_id,
+      motif: motif.trim(),
+      documents: [
+        { nom: "Ordonnance TGI", url: commandement.ordonnance_tgi_url || null },
+        { nom: "Acte de commandement", url: commandement.document_pdf_url || null },
+      ],
+    });
+    setLoading(false);
+    if (!res.ok) { setErr(res.raison); return; }
+    onDone();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-stone-900/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-sm w-full max-w-lg my-4">
+        <div className="bg-indigo-900 text-white px-5 py-3 flex items-center justify-between">
+          <div className="text-sm font-semibold">Transmettre au Ministere</div>
+          <button onClick={onClose} className="text-indigo-200 hover:text-white"><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="bg-stone-50 border border-stone-200 rounded-sm p-3 text-xs space-y-1">
+            <div><strong>Parcelle :</strong> <span className="font-mono">{commandement.parcelle_id}</span></div>
+            <div><strong>Creancier :</strong> {commandement.creancier_nom}</div>
+            <div><strong>Debiteur :</strong> {commandement.debiteur_nom}</div>
+            <div><strong>Montant :</strong> {new Intl.NumberFormat("fr-FR").format(commandement.montant_pretendu || 0)} FCFA</div>
+            {commandement.magistrat_tgi && (
+              <div><strong>Magistrat TGI :</strong> {commandement.magistrat_tgi}</div>
+            )}
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 text-xs text-amber-900">
+            <strong>Procedure :</strong> la decision du TGI va etre transmise au Ministere pour validation administrative.
+            Le Conservateur verifiera les documents judiciaires, puis le DG signera l'inscription au registre foncier.
+          </div>
+
+          <div>
+            <label className="text-xs font-mono text-stone-500 block mb-1">Motif de la transmission</label>
+            <textarea
+              value={motif}
+              onChange={(e) => setMotif(e.target.value)}
+              rows={3}
+              placeholder="Ex: Decision du TGI rendue - demande de validation administrative pour saisie."
+              className="w-full border border-stone-300 rounded-sm px-3 py-2 text-sm"
+            />
+          </div>
+
+          {err && <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-sm p-2">{err}</div>}
+        </div>
+        <div className="flex justify-end gap-2 px-5 pb-5 pt-3 border-t border-stone-200">
+          <button onClick={onClose} className="text-xs px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-sm">Annuler</button>
+          <button
+            onClick={valider}
+            disabled={loading}
+            className="text-xs px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-sm flex items-center gap-1"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            {loading ? "Transmission..." : "Transmettre au Ministere"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HuissierCommandements() {
   const [profil, setProfil] = useState(null);
   const [commandements, setCommandements] = useState([]);
