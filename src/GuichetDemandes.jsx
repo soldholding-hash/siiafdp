@@ -435,6 +435,15 @@ export default function GuichetDemandes({ currentUser }) {
           onDone={apresCreation}
         />
       )}
+
+      {paiementCible && (
+        <ModalPaiement
+          demande={paiementCible}
+          agentNom={currentUser?.nom || "Agent Trésor"}
+          onClose={() => setPaiementCible(null)}
+          onDone={apresPaiement}
+        />
+      )}
     </div>
   );
 }
