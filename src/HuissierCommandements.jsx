@@ -26,13 +26,6 @@ const STATUT_INFO = {
   converti_saisie: { label: "Converti en saisie", couleur: "bg-red-200 text-red-900" },
   mainleve: { label: "Main-levée", couleur: "bg-emerald-100 text-emerald-800" },
   expire: { label: "Expiré", couleur: "bg-stone-100 text-stone-700" },
-  // Statuts circuit ministériel
-  transmis_ministere: { label: "Transmis au Ministère", couleur: "bg-indigo-100 text-indigo-800" },
-  en_attente_conservateur: { label: "Chez le Conservateur", couleur: "bg-amber-100 text-amber-800" },
-  refuse_conservateur: { label: "Refusé — complément", couleur: "bg-red-100 text-red-800" },
-  en_attente_dg: { label: "Chez le DG", couleur: "bg-blue-100 text-blue-800" },
-  inscrite: { label: "Saisie inscrite", couleur: "bg-emerald-100 text-emerald-800" },
-  executee: { label: "Exécutée", couleur: "bg-emerald-200 text-emerald-900" },
 };
 
 const MODES = [
