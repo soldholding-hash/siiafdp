@@ -412,6 +412,13 @@ export default function GuichetDemandes({ currentUser }) {
                   <Send size={12} /> Transmettre au Trésor
                 </button>
               )}
+
+              {d.statut === "en_attente_paiement" && (
+                <button onClick={() => setPaiementCible(d)}
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
+                  <CreditCard size={12} /> Valider le paiement
+                </button>
+              )}
             </div>
           ))}
         </div>
