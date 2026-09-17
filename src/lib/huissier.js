@@ -385,3 +385,37 @@ export async function enregistrerOrdonnance(commandementId, ordonnanceUrl) {
   if (error) return { ok: false, raison: error.message };
   return { ok: true, commandement: data };
 }
+
+// ============================================
+// TRANSMISSION AU MINISTÈRE (validation)
+// ============================================
+
+export async function transmettreMinistere(commandementId, payload) {
+  const { data, error } = await supabase
+    .from("commandements")
+    .update({
+      statut: "transmis_ministere",
+      transmis_ministere_le: new Date().toISOString(),
+      documents_judiciaires: payload.documents || [],
+    })
+    .eq("id", commandementId)
+    .select()
+    .single();
+  if (error) return { ok: false, raison: error.message };
+
+  // Log dans le journal
+  await supabase.rpc("log_dossier", {
+    p_dossier_id: commandementId,
+    p_parcelle_id: payload.parcelle_id,
+    p_commandement_id: commandementId,
+    p_type_action: "transmission_ministere",
+    p_description: "Décision du TGI transmise au Ministère pour validation",
+    p_motif: payload.motif || null,
+    p_metadata: {
+      documents: payload.documents || [],
+      statut_precedent: "autorise"
+    }
+  });
+
+  return { ok: true, commandement: data };
+}

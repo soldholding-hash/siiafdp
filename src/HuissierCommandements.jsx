@@ -9,6 +9,7 @@ import {
   creerCommandement,
   uploaderDocumentHuissier,
   notifierCommandement,
+  transmettreMinistere,
   soumettreAuTGI,
   enregistrerCertificat,
   uploaderBlobHuissier,
@@ -268,6 +269,7 @@ export default function HuissierCommandements() {
   const [loading, setLoading] = useState(true);
   const [showCreation, setShowCreation] = useState(false);
   const [notifCible, setNotifCible] = useState(null);
+  const [ministereCible, setMinistereCible] = useState(null);
   const [msg, setMsg] = useState(null);
 
   async function charger() {
@@ -327,6 +329,13 @@ export default function HuissierCommandements() {
       await charger();
       setTimeout(() => setMsg(null), 3000);
     } catch (e) { setMsg({ ok: false, text: e.message }); }
+  }
+
+  async function apresTransmission() {
+    setMinistereCible(null);
+    setMsg({ ok: true, text: "Dossier transmis au Ministère pour validation." });
+    await charger();
+    setTimeout(() => setMsg(null), 4000);
   }
 
   async function apresNotification() {
@@ -423,11 +432,23 @@ export default function HuissierCommandements() {
                         </span>
                       )}
                       {c.statut === "autorise" && (
+                        <button onClick={() => setMinistereCible(c)}
+                          className="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm inline-flex items-center gap-1"
+                          title="Transmettre au Ministère pour validation">
+                          <Send size={11} /> Transmettre au Ministère
+                        </button>
+                      )}
+                      {c.statut === "autorise" && (
                         <button onClick={() => delivrerCertificat(c, "non_contestation")}
                           className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center gap-1"
                           title="Délivrer un certificat">
                           <Award size={11} /> Certificat
                         </button>
+                      )}
+                      {c.statut === "transmis_ministere" && (
+                        <span className="text-xs px-2 py-1 rounded-sm bg-indigo-100 text-indigo-800">
+                          📤 Au Ministère
+                        </span>
                       )}
                       {c.statut === "notifie" && c.notifie_le && (
                         <div className="text-xs text-stone-500 inline-flex items-center gap-1">
@@ -458,6 +479,13 @@ export default function HuissierCommandements() {
 
       {showCreation && <ModalCreation huissierId={profil.id} onClose={() => setShowCreation(false)} onDone={apresCreation} />}
       {notifCible && <ModalNotification commandement={notifCible} onClose={() => setNotifCible(null)} onDone={apresNotification} />}
+      {ministereCible && (
+        <ModalTransmettreMinistere
+          commandement={ministereCible}
+          onClose={() => setMinistereCible(null)}
+          onDone={apresTransmission}
+        />
+      )}
     </div>
   );
 }
