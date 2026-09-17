@@ -157,11 +157,6 @@ const NAV = [
   { id: "judiciaire", label: "Connexion Judiciaire", icon: Scale },
   { id: "gels_judiciaires", label: "Gels judiciaires", icon: Gavel },
   { id: "aml", label: "Conformité AML", icon: AlertTriangle },
-  // Entrées spécifiques huissier
-  { id: "huissier_dashboard", label: "Tableau de bord huissier", icon: Gavel },
-  { id: "huissier_mandats", label: "Mes mandats", icon: Inbox },
-  { id: "huissier_mesures", label: "Mesures conservatoires", icon: Gavel },
-  { id: "huissier_commandements", label: "Commandements", icon: FileText },
 ];
 
 // ---------- comptes de service & droits d'accès ----------
