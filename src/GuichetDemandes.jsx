@@ -3,7 +3,7 @@ import {
   Inbox, Plus, Loader2, X, CheckCircle, Clock, Send,
   User, FileText, Search, CreditCard
 } from "lucide-react";
-import { creerDemande, listerDemandes, transmettreTresor, validerPaiement } from "./lib/demandes";
+import { creerDemande, listerDemandes, transmettreTresor, transmettreTopographe } from "./lib/demandes";
 
 const fmt = (n) => new Intl.NumberFormat("fr-FR").format(n || 0) + " FCFA";
 
@@ -413,10 +413,10 @@ export default function GuichetDemandes({ currentUser }) {
                 </button>
               )}
 
-              {d.statut === "en_attente_paiement" && (
-                <button onClick={() => setPaiementCible(d)}
-                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
-                  <CreditCard size={12} /> Valider le paiement
+              {d.statut === "paye" && (
+                <button onClick={() => transmettreTopo(d)}
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
+                  <Send size={12} /> Transmettre au topographe
                 </button>
               )}
             </div>
@@ -436,14 +436,7 @@ export default function GuichetDemandes({ currentUser }) {
         />
       )}
 
-      {paiementCible && (
-        <ModalPaiement
-          demande={paiementCible}
-          agentNom={currentUser?.nom || "Agent Trésor"}
-          onClose={() => setPaiementCible(null)}
-          onDone={apresPaiement}
-        />
-      )}
+
     </div>
   );
 }

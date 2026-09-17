@@ -164,3 +164,29 @@ export async function chercherDemandeParNin(nin) {
   if (error) { console.error(error); return []; }
   return data || [];
 }
+
+
+// ============================================
+// TRANSMETTRE AU TOPOGRAPHE (Guichet, après paiement)
+// ============================================
+
+export async function transmettreTopographe(demandeId, agentNom) {
+  const { error } = await supabase
+    .from("demandes")
+    .update({
+      statut: "transmis_topographe",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", demandeId);
+  if (error) return { ok: false, raison: error.message };
+
+  await supabase.from("etapes_demandes").insert({
+    demande_id: demandeId,
+    etape: "transmission_topographe",
+    acteur_nom: agentNom,
+    acteur_role: "guichet",
+    observation: "Dossier transmis à la brigade topographique pour levé",
+  });
+
+  return { ok: true };
+}
