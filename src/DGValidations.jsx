@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
-  Award, Loader2, X, CheckCircle, XCircle, AlertTriangle, Eye,
-  Send, Clock, FileText, PenTool, Building2
+  Award, Loader2, X, CheckCircle, AlertTriangle, Eye,
+  Send, Clock, FileText, PenSquare
 } from "lucide-react";
 import { supabase } from "./lib/db";
 import { getSignedUrl } from "./lib/huissier";
@@ -96,7 +96,7 @@ function ModalSignature({ dossier, onClose, onDone, currentUser }) {
       <div className="bg-white rounded-sm w-full max-w-3xl my-4">
         <div className="bg-emerald-900 text-white px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <PenTool size={18} />
+            <PenSquare size={18} />
             <div className="text-sm font-semibold">Signature de l'inscription — {dossier.parcelle_id}</div>
           </div>
           <button onClick={onClose} className="text-emerald-200 hover:text-white"><X size={18} /></button>
@@ -192,7 +192,7 @@ function ModalSignature({ dossier, onClose, onDone, currentUser }) {
             disabled={loading}
             className="text-xs px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-sm flex items-center gap-1"
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <PenTool size={14} />}
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <PenSquare size={14} />}
             {loading ? "Signature..." : "Signer l'inscription"}
           </button>
         </div>
@@ -317,7 +317,7 @@ export default function DGValidations({ currentUser }) {
                     {d.statut === "en_attente_dg" ? (
                       <button onClick={() => setSelected(d)}
                         className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center gap-1">
-                        <PenTool size={11} /> Signer
+                        <PenSquare size={11} /> Signer
                       </button>
                     ) : (
                       <span className="text-xs text-stone-400">{d.arrete_numero || "—"}</span>
