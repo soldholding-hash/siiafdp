@@ -25,6 +25,7 @@ import HuissierMandats from "./HuissierMandats";
 import MandaterHuissier from "./MandaterHuissier";
 import Messagerie from "./Messagerie";
 import AppelVoIP from "./AppelVoIP";
+import GuichetDemandes from "./GuichetDemandes";
 import { compterMessagesNonLus } from "./lib/messagerie";
 import TribunalCommandements from "./TribunalCommandements";
 import ModeTerrain from "./ModeTerrain";
@@ -132,6 +133,7 @@ const NAV = [
   { id: "cartes_page", label: "Registre des cartes", icon: CreditCard },
   { id: "domaine", label: "Domaine public", icon: Landmark },
   { id: "guichet", label: "Guichet unique", icon: Inbox },
+  { id: "guichet_demandes", label: "Demandes au guichet", icon: Inbox },
   { id: "guichet_externe", label: "Guichet externe", icon: Building2 },
   { id: "workflow", label: "Workflow", icon: GitBranch },
   { id: "dossiers_contentieux", label: "Dossiers contentieux", icon: Scale },
@@ -172,10 +174,10 @@ const USERS = [
   { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["messagerie", "parcelles_attente", "mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
   { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["messagerie", "parcelles_attente", "cartes_page", "cartographie", "titres", "cartes"] },
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["messagerie", "cartographie", "domaine"] },
-  { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["messagerie", "guichet"] },
+  { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet_demandes", "messagerie", "guichet"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["messagerie", "mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
   { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["messagerie", "gels_judiciaires", "dossiers_contentieux", "workflow"] },
-  { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["messagerie", "recharger_partenaire", "tresor"] },
+  { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["guichet_demandes", "messagerie", "recharger_partenaire", "tresor"] },
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["messagerie", "dossiers_contentieux", "audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["messagerie", "rh"] },
   { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["messagerie", "recharger_partenaire", "validation_ministere", "cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
@@ -1179,6 +1181,7 @@ export default function SigefApp() {
           {view === "huissier_commandements" && <HuissierCommandements />}
           {view === "huissier_mandats" && <HuissierMandats />}
           {view === "messagerie" && <Messagerie currentUser={currentUser} />}
+          {view === "guichet_demandes" && <GuichetDemandes currentUser={currentUser} />}
 
           {/* VoIP - Appels internes */}
           {currentUser && <AppelVoIP currentUser={currentUser} />}
