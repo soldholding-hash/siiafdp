@@ -26,6 +26,7 @@ import MandaterHuissier from "./MandaterHuissier";
 import Messagerie from "./Messagerie";
 import AppelVoIP from "./AppelVoIP";
 import ConservateurValidations from "./ConservateurValidations";
+import DGValidations from "./DGValidations";
 import { compterMessagesNonLus } from "./lib/messagerie";
 import TribunalCommandements from "./TribunalCommandements";
 import ModeTerrain from "./ModeTerrain";
@@ -163,6 +164,7 @@ const NAV = [
   { id: "huissier_mesures", label: "Mesures conservatoires", icon: Gavel },
   { id: "huissier_commandements", label: "Commandements", icon: FileText },
   { id: "conservateur_validations", label: "Validations Ministère", icon: ShieldCheck },
+  { id: "dg_validations", label: "Signature DG", icon: Award },
 ];
 
 // ---------- comptes de service & droits d'accès ----------
@@ -180,7 +182,7 @@ const USERS = [
   { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["messagerie", "recharger_partenaire", "tresor"] },
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["messagerie", "dossiers_contentieux", "audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["messagerie", "rh"] },
-  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["messagerie", "recharger_partenaire", "validation_ministere", "cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
+  { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["dg_validations", "conservateur_validations", "messagerie", "recharger_partenaire", "validation_ministere", "cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
   { username: "mucodec", password: "mucodec2026", nom: "Agent MUCODEC", service: "MUCODEC — Partenaire bancaire (Sécuri-Gage)", views: ["messagerie", "aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "MUCODEC", compteId: "CPT-MUCODEC" },
   { username: "cofina", password: "cofina2026", nom: "Agent COFINA", service: "COFINA — Partenaire bancaire (Sécuri-Gage)", views: ["messagerie", "aml_banque", "journal_banque", "tableau_bord", "mes_contentieux", "mes_agents", "portefeuille", "securigage"], banque: "COFINA", compteId: "CPT-COFINA" },
   { username: "tribunal", password: "tribunal2026", nom: "Juge — Chambre civile", service: "Tribunal de Grande Instance (Chambre civile)", views: ["messagerie", "tgi_commandements", "gels_judiciaires", "mes_contentieux", "dossiers_tribunal", "mes_agents", "portefeuille", "judiciaire"], compteId: "CPT-TGI" },
@@ -1182,6 +1184,7 @@ export default function SigefApp() {
           {view === "huissier_mandats" && <HuissierMandats />}
           {view === "messagerie" && <Messagerie currentUser={currentUser} />}
           {view === "conservateur_validations" && <ConservateurValidations currentUser={currentUser} />}
+          {view === "dg_validations" && <DGValidations currentUser={currentUser} />}
 
           {/* VoIP - Appels internes */}
           {currentUser && <AppelVoIP currentUser={currentUser} />}
