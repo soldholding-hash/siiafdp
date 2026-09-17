@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import {
   Inbox, Plus, Loader2, X, CheckCircle, Clock, Send,
-  User, FileText, Search
+  User, FileText, Search, CreditCard
 } from "lucide-react";
-import { creerDemande, listerDemandes, transmettreTresor } from "./lib/demandes";
+import { creerDemande, listerDemandes, transmettreTresor, validerPaiement } from "./lib/demandes";
 
 const fmt = (n) => new Intl.NumberFormat("fr-FR").format(n || 0) + " FCFA";
 
@@ -184,6 +184,72 @@ function ModalNouvelleDemande({ agentNom, onClose, onDone }) {
 }
 
 // ============================================
+// MODAL : Valider le paiement (Trésor)
+// ============================================
+function ModalPaiement({ demande, agentNom, onClose, onDone }) {
+  const [reference, setReference] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState(null);
+
+  async function valider() {
+    if (!reference.trim()) { setErr("Référence de quittance obligatoire"); return; }
+    setLoading(true);
+    const res = await validerPaiement(demande.id, agentNom, reference.trim());
+    setLoading(false);
+    if (!res.ok) { setErr(res.raison); return; }
+    onDone();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-stone-900/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-sm w-full max-w-lg my-4">
+        <div className="bg-emerald-900 text-white px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CreditCard size={18} />
+            <div className="text-sm font-semibold">Valider le paiement</div>
+          </div>
+          <button onClick={onClose} className="text-emerald-200 hover:text-white"><X size={18} /></button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div className="bg-stone-50 border border-stone-200 rounded-sm p-3 text-xs space-y-1">
+            <div><strong>Référence :</strong> <span className="font-mono">{demande.reference}</span></div>
+            <div><strong>Demandeur :</strong> {demande.demandeur_prenom} {demande.demandeur_nom}</div>
+            {demande.demandeur_nin && (
+              <div><strong>NIN :</strong> <span className="font-mono">{demande.demandeur_nin}</span></div>
+            )}
+            <div><strong>Montant :</strong> <span className="font-mono font-bold text-red-700">{fmt(demande.montant_frais)}</span></div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 text-xs text-amber-900">
+            Vérifiez que le demandeur a bien payé <strong>{fmt(demande.montant_frais)}</strong> en espèces ou par mobile money.
+          </div>
+
+          <div>
+            <label className="text-xs font-mono text-stone-500 block mb-1">Numéro de quittance *</label>
+            <input value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="Ex: QUIT-2026-0001"
+              className="w-full border border-stone-300 rounded-sm px-3 py-2 text-sm font-mono" />
+          </div>
+
+          {err && <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-sm p-2">{err}</div>}
+        </div>
+
+        <div className="flex justify-end gap-2 px-5 pb-5 pt-3 border-t border-stone-200">
+          <button onClick={onClose} className="text-xs px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-sm">Annuler</button>
+          <button onClick={valider} disabled={loading}
+            className="text-xs px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-sm flex items-center gap-1">
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+            {loading ? "Validation..." : "Valider le paiement"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // COMPOSANT PRINCIPAL
 // ============================================
 export default function GuichetDemandes({ currentUser }) {
@@ -193,6 +259,7 @@ export default function GuichetDemandes({ currentUser }) {
   const [showNouvelle, setShowNouvelle] = useState(false);
   const [msg, setMsg] = useState(null);
   const [recherche, setRecherche] = useState("");
+  const [paiementCible, setPaiementCible] = useState(null);
 
   async function charger() {
     setLoading(true);
@@ -206,6 +273,13 @@ export default function GuichetDemandes({ currentUser }) {
   async function apresCreation() {
     setShowNouvelle(false);
     setMsg({ ok: true, text: "Demande enregistrée. Vous pouvez la transmettre au Trésor." });
+    await charger();
+    setTimeout(() => setMsg(null), 4000);
+  }
+
+  async function apresPaiement() {
+    setPaiementCible(null);
+    setMsg({ ok: true, text: "Paiement validé. Le dossier repart au guichet pour transmission." });
     await charger();
     setTimeout(() => setMsg(null), 4000);
   }
