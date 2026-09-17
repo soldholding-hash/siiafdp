@@ -37,7 +37,7 @@ import {
   Users, BarChart3, Plus, AlertTriangle, CheckCircle2, Clock,
   ChevronRight, X, Landmark, Banknote, Building2, QrCode, Bell, Eye,
   CreditCard, Lock, Send, ArrowLeftRight, Globe, Layers, MapPin, ArrowLeft, Gavel, Download,
-  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation, Mail
+  Sparkles, Bot, Search, Scale, Loader2, Lightbulb, TrendingUp, Compass, Mic, Wallet, Navigation, Mail, FileText
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -157,6 +157,10 @@ const NAV = [
   { id: "judiciaire", label: "Connexion Judiciaire", icon: Scale },
   { id: "gels_judiciaires", label: "Gels judiciaires", icon: Gavel },
   { id: "aml", label: "Conformité AML", icon: AlertTriangle },
+  { id: "huissier_dashboard", label: "Tableau de bord huissier", icon: Gavel },
+  { id: "huissier_mandats", label: "Mes mandats", icon: Inbox },
+  { id: "huissier_mesures", label: "Mesures conservatoires", icon: Gavel },
+  { id: "huissier_commandements", label: "Commandements", icon: FileText },
 ];
 
 // ---------- comptes de service & droits d'accès ----------
