@@ -338,10 +338,10 @@ export default function GuichetDemandes({ currentUser }) {
         <div>
           <div className="flex items-center gap-3">
             <Inbox className="text-indigo-700" size={26} />
-            <div className="text-2xl font-semibold text-stone-900">Guichet unique</div>
+            <div className="text-2xl font-semibold text-stone-900">{estTresor ? "Paiements à encaisser" : "Guichet unique"}</div>
           </div>
           <div className="text-sm text-stone-500 mt-1">
-            Enregistrement des demandes et orientation vers les services
+            {estTresor ? "Validez les paiements puis transmettez les dossiers au topographe" : "Enregistrement des demandes et orientation vers les services"}
           </div>
         </div>
         <button onClick={() => setShowNouvelle(true)}
