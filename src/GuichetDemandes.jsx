@@ -427,21 +427,21 @@ export default function GuichetDemandes({ currentUser }) {
                 )}
               </div>
 
-              {d.statut === "cree" && (
+              {d.statut === "cree" && estGuichet && (
                 <button onClick={() => transmettre(d)}
                   className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
                   <Send size={12} /> Transmettre au Trésor
                 </button>
               )}
 
-              {d.statut === "en_attente_paiement" && (
+              {d.statut === "en_attente_paiement" && estTresor && (
                 <button onClick={() => setPaiementCible(d)}
                   className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
                   <CreditCard size={12} /> Valider le paiement
                 </button>
               )}
 
-              {d.statut === "paye" && (
+              {d.statut === "paye" && estTresor && (
                 <button onClick={() => transmettreTopo(d)}
                   className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
                   <Send size={12} /> Transmettre au topographe
