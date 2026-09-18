@@ -123,8 +123,13 @@ export default function ModeTerrain({ onEnregistrer, onRetour, demandeTopo, onVa
     layersRef.current.forEach((l) => l.remove());
     layersRef.current = [];
 
+    // Helper : extraire lat/lng peu importe le format (array ou objet)
+    const getLat = (p) => Array.isArray(p) ? p[0] : p.lat;
+    const getLng = (p) => Array.isArray(p) ? p[1] : p.lng;
+
+    // 1. Dessiner les marqueurs de bornes
     bornes.forEach((p, i) => {
-      const coords = Array.isArray(p) ? p : [p.lat, p.lng];
+      const coords = [getLat(p), getLng(p)];
       const m = L.circleMarker(coords, {
         radius: 6, color: "#7c3aed", weight: 3,
         fillColor: "#a78bfa", fillOpacity: 1,
@@ -132,20 +137,23 @@ export default function ModeTerrain({ onEnregistrer, onRetour, demandeTopo, onVa
       layersRef.current.push(m);
     });
 
-    // Lignes entre bornes
+    // 2. Dessiner les lignes entre bornes + étiquettes
     for (let i = 0; i < bornes.length - 1; i++) {
       const cle = `${i}-${i + 1}`;
       const dist = distances[cle];
       const label = dist ? ` ${dist} m ` : "?";
-      const line = L.polyline([bornes[i], bornes[i + 1]], {
+      const p1 = [getLat(bornes[i]), getLng(bornes[i])];
+      const p2 = [getLat(bornes[i + 1]), getLng(bornes[i + 1])];
+
+      const line = L.polyline([p1, p2], {
         color: "#7c3aed", weight: 3,
       }).addTo(mapInstance.current);
       layersRef.current.push(line);
 
-      // Étiquette au milieu du segment
+      // Étiquette au milieu du segment (utilise getLat/getLng)
       const mid = [
-        (bornes[i][0] + bornes[i + 1][0]) / 2,
-        (bornes[i][1] + bornes[i + 1][1]) / 2,
+        (getLat(bornes[i]) + getLat(bornes[i + 1])) / 2,
+        (getLng(bornes[i]) + getLng(bornes[i + 1])) / 2,
       ];
       const txt = L.marker(mid, {
         icon: L.divIcon({
@@ -157,9 +165,10 @@ export default function ModeTerrain({ onEnregistrer, onRetour, demandeTopo, onVa
       layersRef.current.push(txt);
     }
 
-    // Polygone fermé
+    // 3. Polygone fermé
     if (bornes.length >= 3) {
-      const poly = L.polygon(bornes, {
+      const coordsPoly = bornes.map((p) => [getLat(p), getLng(p)]);
+      const poly = L.polygon(coordsPoly, {
         color: "#7c3aed", weight: 2, fillColor: "#a78bfa", fillOpacity: 0.25,
       }).addTo(mapInstance.current);
       layersRef.current.push(poly);
