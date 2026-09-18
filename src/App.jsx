@@ -135,6 +135,7 @@ const NAV = [
   { id: "domaine", label: "Domaine public", icon: Landmark },
   { id: "guichet", label: "Guichet unique", icon: Inbox },
   { id: "guichet_demandes", label: "Demandes au guichet", icon: Inbox },
+  { id: "topographe", label: "Brigade Topographique", icon: MapPin },
   { id: "tresor_demandes", label: "Paiements à encaisser", icon: Banknote },
   { id: "guichet_externe", label: "Guichet externe", icon: Building2 },
   { id: "workflow", label: "Workflow", icon: GitBranch },
@@ -1187,6 +1188,7 @@ export default function SigefApp() {
           {view === "messagerie" && <Messagerie currentUser={currentUser} />}
           {view === "tresor_demandes" && <GuichetDemandes currentUser={currentUser} />}
           {view === "guichet_demandes" && <GuichetDemandes currentUser={currentUser} />}
+          {view === "topographe" && <VueTopographe currentUser={currentUser} />}
 
           {/* VoIP - Appels internes */}
           {currentUser && <AppelVoIP currentUser={currentUser} />}
