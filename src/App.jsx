@@ -174,10 +174,10 @@ const NAV = [
 // saisie opérationnelle des autres services.
 
 const USERS = [
-  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["messagerie", "parcelles_attente", "mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
+  { username: "topographie", password: "topo2026", nom: "F. Ngoma", service: "Brigade Topographique (Cadastre)", views: ["topographe", "messagerie", "parcelles_attente", "mode_terrain", "cartographie", "brigade_dashboard", "cadastre"] },
   { username: "conservation", password: "titres2026", nom: "R. Ondongo", service: "Conservation foncière", views: ["messagerie", "parcelles_attente", "cartes_page", "cartographie", "titres", "cartes"] },
   { username: "domaine", password: "domaine2026", nom: "P. Massamba", service: "Direction du Domaine Public", views: ["messagerie", "cartographie", "domaine"] },
-  { username: "guichet", password: "guichet2026", nom: "S. Bakala",
+  { username: "guichet", password: "guichet2026", nom: "S. Bakala", service: "Guichet unique", views: ["guichet_demandes", "messagerie"] },
   service: "Guichet unique", views: ["guichet_demandes", "messagerie"] },
     { username: "topographe", password: "topo2026", nom: "Agent Topographe", service: "Brigade Topographique", views: ["topographe", "messagerie"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["messagerie", "mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
