@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "./lib/db"; 
+import { supabase } from "./lib/db";
 import { validerLeveTopographe } from "./lib/demandes";
-import { Loader2, Inbox, MapPin, CheckCircle } from "lucide-react";
+import { Loader2, Inbox, MapPin, CheckCircle, Crosshair } from "lucide-react";
 
 export default function VueTopographe({ currentUser }) {
   const [demandes, setDemandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  const [rapportUrl, setRapportUrl] = useState("");
-  const [observations, setObservations] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [msg, setMsg] = useState(null);
+
+  // Champs du levé topographique
+  const [coords, setCoords] = useState({ lat: "", lng: "" });
+  const [superficie, setSuperficie] = useState("");
+  const [observations, setObservations] = useState("");
+  const [rapportUrl, setRapportUrl] = useState("");
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsErr, setGpsErr] = useState(null);
 
   async function charger() {
     setLoading(true);
@@ -19,28 +25,70 @@ export default function VueTopographe({ currentUser }) {
       .select("*")
       .eq("statut", "transmis_topographe")
       .order("updated_at", { ascending: false });
-
     if (!error) setDemandes(data || []);
     setLoading(false);
   }
 
   useEffect(() => { charger(); }, []);
 
+  function capturerPosition() {
+    setGpsErr(null);
+    if (!navigator.geolocation) {
+      setGpsErr("La géolocalisation n'est pas supportée par cet appareil.");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({
+          lat: pos.coords.latitude.toFixed(6),
+          lng: pos.coords.longitude.toFixed(6),
+        });
+        setGpsLoading(false);
+      },
+      (err) => {
+        setGpsErr("Impossible d'obtenir la position : " + err.message);
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  function ouvrirLeve(d) {
+    setSelected(d);
+    setCoords({ lat: "", lng: "" });
+    setSuperficie("");
+    setObservations("");
+    setRapportUrl("");
+    setGpsErr(null);
+  }
+
   async function valider(e) {
     e.preventDefault();
     if (!selected) return;
     setEnCours(true);
+
+    // Construire les observations complètes
+    let obsFinales = "";
+    if (coords.lat && coords.lng) {
+      obsFinales += "Coordonnées GPS : " + coords.lat + ", " + coords.lng + "\n";
+    }
+    if (superficie) {
+      obsFinales += "Superficie : " + superficie + " m²\n";
+    }
+    obsFinales += observations || "";
+
     const res = await validerLeveTopographe(
       selected.id,
       currentUser?.nom || "Topographe",
-      rapportUrl,
-      observations
+      rapportUrl || ("levé-" + selected.reference + "-" + new Date().toISOString().slice(0, 10)),
+      obsFinales
     );
     setEnCours(false);
 
     if (res.ok) {
       setMsg({ ok: true, text: "Levé validé et transmis à la conservation." });
-      setSelected(null); setRapportUrl(""); setObservations("");
+      setSelected(null);
       await charger();
     } else {
       setMsg({ ok: false, text: "Erreur : " + res.raison });
@@ -65,12 +113,12 @@ export default function VueTopographe({ currentUser }) {
 
       {loading ? (
         <div className="flex items-center gap-2 text-stone-500 text-sm p-6">
-          <Loader2 className="animate-spin" size={16} /> Chargement des dossiers...
+          <Loader2 className="animate-spin" size={16} /> Chargement...
         </div>
       ) : demandes.length === 0 ? (
         <div className="bg-white border border-stone-200 rounded-sm p-8 text-center">
           <Inbox size={32} className="text-stone-300 mx-auto mb-3" />
-          <div className="text-sm text-stone-500">Aucun dossier en attente de levé topographique</div>
+          <div className="text-sm text-stone-500">Aucun dossier en attente de levé</div>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -97,7 +145,7 @@ export default function VueTopographe({ currentUser }) {
                 </div>
               </div>
               <button
-                onClick={() => setSelected(d)}
+                onClick={() => ouvrirLeve(d)}
                 className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium"
               >
                 <MapPin size={12} /> Effectuer le levé
@@ -108,38 +156,63 @@ export default function VueTopographe({ currentUser }) {
       )}
 
       {selected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-sm p-5 w-full max-w-md space-y-4">
-            <h3 className="font-semibold text-stone-900">Levé topographique : {selected.reference}</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-sm p-5 w-full max-w-lg space-y-4 my-4">
+            <div>
+              <h3 className="font-semibold text-stone-900">Levé topographique</h3>
+              <div className="text-xs text-stone-500 font-mono mt-0.5">{selected.reference} — {selected.demandeur_prenom} {selected.demandeur_nom}</div>
+            </div>
+
             <form onSubmit={valider} className="space-y-3">
-              <div>
-                <label className="text-xs text-stone-500 block mb-1">Lien du rapport / plan de bornage (URL)</label>
-                <input
-                  type="text"
-                  value={rapportUrl}
-                  onChange={(e) => setRapportUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full border border-stone-200 rounded-sm px-3 py-2 text-sm"
-                  required
-                />
+              {/* GPS */}
+              <div className="border border-stone-200 rounded-sm p-3 space-y-2 bg-stone-50">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-semibold text-stone-700">Position GPS</div>
+                  <button type="button" onClick={capturerPosition} disabled={gpsLoading}
+                    className="text-xs px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm inline-flex items-center gap-1">
+                    {gpsLoading ? <Loader2 className="animate-spin" size={12} /> : <Crosshair size={12} />}
+                    {gpsLoading ? "Localisation..." : "Capturer ma position"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="text" value={coords.lat} onChange={(e) => setCoords({ ...coords, lat: e.target.value })}
+                    placeholder="Latitude" className="border border-stone-300 rounded-sm px-2 py-1.5 text-xs font-mono" />
+                  <input type="text" value={coords.lng} onChange={(e) => setCoords({ ...coords, lng: e.target.value })}
+                    placeholder="Longitude" className="border border-stone-300 rounded-sm px-2 py-1.5 text-xs font-mono" />
+                </div>
+                {gpsErr && <div className="text-xs text-red-700">{gpsErr}</div>}
               </div>
+
+              {/* Superficie */}
+              <div>
+                <label className="text-xs text-stone-500 block mb-1">Superficie (m²)</label>
+                <input type="number" value={superficie} onChange={(e) => setSuperficie(e.target.value)}
+                  placeholder="Ex: 500" className="w-full border border-stone-200 rounded-sm px-3 py-2 text-sm" />
+              </div>
+
+              {/* Observations */}
               <div>
                 <label className="text-xs text-stone-500 block mb-1">Observations techniques</label>
-                <textarea
-                  value={observations}
-                  onChange={(e) => setObservations(e.target.value)}
-                  rows={3}
-                  className="w-full border border-stone-200 rounded-sm px-3 py-2 text-sm"
-                  placeholder="Superficie, coordonnées, remarques..."
-                />
+                <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={3}
+                  placeholder="Bornes plantées, remarques, voisinage..."
+                  className="w-full border border-stone-200 rounded-sm px-3 py-2 text-sm" />
               </div>
-              <div className="flex gap-2 justify-end">
+
+              {/* Rapport URL (optionnel) */}
+              <div>
+                <label className="text-xs text-stone-500 block mb-1">Lien du plan de bornage (optionnel)</label>
+                <input type="text" value={rapportUrl} onChange={(e) => setRapportUrl(e.target.value)}
+                  placeholder="https://..." className="w-full border border-stone-200 rounded-sm px-3 py-2 text-sm" />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2 border-t border-stone-200">
                 <button type="button" onClick={() => setSelected(null)} className="px-3 py-2 text-xs border rounded-sm">
                   Annuler
                 </button>
-                <button type="submit" disabled={enCours} className="px-3 py-2 text-xs bg-emerald-600 text-white rounded-sm inline-flex items-center gap-1.5">
+                <button type="submit" disabled={enCours}
+                  className="px-3 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center gap-1.5">
                   {enCours ? <Loader2 className="animate-spin" size={12} /> : <CheckCircle size={12} />}
-                  Valider le levé
+                  Valider et transmettre à la conservation
                 </button>
               </div>
             </form>
