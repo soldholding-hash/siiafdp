@@ -3,7 +3,7 @@ import { supabase } from "./lib/db";
 import { validerLeveTopographe } from "./lib/demandes";
 import { Loader2, Inbox, MapPin, CheckCircle, Crosshair } from "lucide-react";
 
-export default function VueTopographe({ currentUser }) {
+export default function VueTopographe({ currentUser, onOuvrirModeTerrain }) {
   const [demandes, setDemandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -145,7 +145,7 @@ export default function VueTopographe({ currentUser }) {
                 </div>
               </div>
               <button
-                onClick={() => ouvrirLeve(d)}
+                onClick={() => onOuvrirModeTerrain ? onOuvrirModeTerrain(d) : ouvrirLeve(d)}
                 className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium"
               >
                 <MapPin size={12} /> Effectuer le levé

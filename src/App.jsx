@@ -249,6 +249,7 @@ export default function SigefApp() {
   const [showAddBail, setShowAddBail] = useState(false);
   const [encaissements, setEncaissements] = useState([]);
   const [showAddEncaissement, setShowAddEncaissement] = useState(false);
+  const [demandeTopoEnCours, setDemandeTopoEnCours] = useState(null);
   const [notifications, setNotifications] = useState([
     { id: 1, ts: "22/08/2026 08:12", destinataire: "Mme Nkounkou A.", canal: "SMS", message: "Votre titre foncier P-04131 est disponible au retrait." },
   ]);
@@ -376,6 +377,24 @@ export default function SigefApp() {
     setView(user.views[0]);
     setAudit((a) => [{ id: a.length + 1, ts: nowStamp(), user: user.nom, action: `Connexion au système (service : ${user.service})` }, ...a]);
     return null;
+  }
+
+  async function handleValiderLeveTopo({ bornes, surface, observations }) {
+    if (!demandeTopoEnCours) return;
+    const obs = "Bornes : " + bornes.length + " — Superficie : " + Math.round(surface || 0) + " m² — " + (observations || "");
+    const res = await validerLeveTopographe(demandeTopoEnCours.id, currentUser?.nom || "Topographe", "leve-" + demandeTopoEnCours.reference, obs);
+    if (!res.ok) {
+      alert("Erreur : " + res.raison);
+      return;
+    }
+    alert("✅ Levé transmis à la conservation !");
+    setDemandeTopoEnCours(null);
+    setView("topographe");
+  }
+
+  function handleOuvrirModeTerrain(demande) {
+    setDemandeTopoEnCours(demande);
+    setView("mode_terrain");
   }
 
   async function handleEnregistrerTerrain({ bornes, distances, surface, arrondissement, quartier, section, lot }) {
@@ -959,7 +978,7 @@ export default function SigefApp() {
   
 
   if (view === "mode_terrain") {
-    return <ModeTerrain onEnregistrer={handleEnregistrerTerrain} onRetour={handleRetourTerrain} />;
+    return <ModeTerrain onEnregistrer={handleEnregistrerTerrain} onRetour={handleRetourTerrain} demandeTopo={demandeTopoEnCours} onValiderLeve={handleValiderLeveTopo} />;
   }
 
   return (
@@ -1065,7 +1084,7 @@ export default function SigefApp() {
           )}
 
           {view === "cartographie" && <VueCartographie parcelles={parcelles} />}
-          {view === "mode_terrain" && <ModeTerrain onEnregistrer={handleEnregistrerTerrain} onRetour={handleRetourTerrain} />}
+          {view === "mode_terrain" && <ModeTerrain onEnregistrer={handleEnregistrerTerrain} onRetour={handleRetourTerrain} demandeTopo={demandeTopoEnCours} onValiderLeve={handleValiderLeveTopo} />}
 
           {view === "cadastre" && (
             <Cadastre
@@ -1187,7 +1206,7 @@ export default function SigefApp() {
           {view === "messagerie" && <Messagerie currentUser={currentUser} />}
           {view === "tresor_demandes" && <GuichetDemandes currentUser={currentUser} />}
           {view === "guichet_demandes" && <GuichetDemandes currentUser={currentUser} />}
-          {view === "topographe" && <VueTopographe currentUser={currentUser} />}
+          {view === "topographe" && <VueTopographe currentUser={currentUser} onOuvrirModeTerrain={handleOuvrirModeTerrain} />}
 
           {/* VoIP - Appels internes */}
           {currentUser && <AppelVoIP currentUser={currentUser} />}

@@ -23,7 +23,7 @@ function calculerSurfaceM2(points) {
 // Lettres pour nommer les bornes : A, B, C...
 const lettre = (i) => String.fromCharCode(65 + (i % 26));
 
-export default function ModeTerrain({ onEnregistrer, onRetour }) {
+export default function ModeTerrain({ onEnregistrer, onRetour, demandeTopo, onValiderLeve }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markerMe = useRef(null);
@@ -247,6 +247,18 @@ export default function ModeTerrain({ onEnregistrer, onRetour }) {
         </div>
       </div>
 
+      {demandeTopo && (
+        <div className="bg-blue-600 text-white px-4 py-2 flex items-center justify-between shrink-0">
+          <div className="text-xs">
+            <div className="font-semibold">📍 Levé en cours</div>
+            <div className="font-mono">{demandeTopo.reference} — {demandeTopo.demandeur_prenom} {demandeTopo.demandeur_nom}</div>
+          </div>
+          <button onClick={onRetour} className="text-xs px-3 py-1 border border-white/40 rounded-sm hover:bg-white/10">
+            Annuler
+          </button>
+        </div>
+      )}
+
       {(position || erreur) && (
         <div className={"text-xs px-4 py-1.5 flex justify-between shrink-0 " + (erreur ? "bg-red-900 text-red-100" : "bg-stone-800 text-stone-300")}>
           {erreur ? <span>{erreur}</span> : (
@@ -290,6 +302,12 @@ export default function ModeTerrain({ onEnregistrer, onRetour }) {
             className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-base py-4 rounded-sm font-semibold">
             <MapPin size={20} /> ENREGISTRER BORNE {lettre(bornes.length)}
           </button>
+
+          {demandeTopo && bornes.length >= 3 && (
+            <button onClick={() => onValiderLeve && onValiderLeve({ bornes, surface: surfaceMano, observations: "" })} className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-base py-4 rounded-sm font-semibold mt-2">
+              <Check size={20} /> TRANSMETTRE À LA CONSERVATION
+            </button>
+          )}
 
           {/* Tableau des segments à mesurer */}
           {bornes.length >= 2 && (
