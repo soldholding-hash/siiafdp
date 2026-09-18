@@ -135,6 +135,7 @@ const NAV = [
   { id: "domaine", label: "Domaine public", icon: Landmark },
   { id: "guichet", label: "Guichet unique", icon: Inbox },
   { id: "guichet_demandes", label: "Demandes au guichet", icon: Inbox },
+  { id: "tresor_demandes", label: "Paiements à encaisser", icon: Banknote },
   { id: "guichet_externe", label: "Guichet externe", icon: Building2 },
   { id: "workflow", label: "Workflow", icon: GitBranch },
   { id: "dossiers_contentieux", label: "Dossiers contentieux", icon: Scale },
@@ -180,7 +181,7 @@ const USERS = [
     { username: "topographe", password: "topo2026", nom: "Agent Topographe", service: "Brigade Topographique", views: ["topographe", "messagerie"] },
   { username: "notaire", password: "notaire2026", nom: "Me Kimbembe", service: "Guichet externe (Notaire agréé)", views: ["messagerie", "mes_agents", "portefeuille", "guichet_externe"], compteId: "CPT-NOTAIRE" },
   { username: "contentieux", password: "contentieux2026", nom: "T. Milandou", service: "Contentieux", views: ["messagerie", "gels_judiciaires", "dossiers_contentieux", "workflow"] },
-  { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["guichet_demandes", "messagerie", "recharger_partenaire", "tresor"] },
+  { username: "tresor", password: "tresor2026", nom: "C. Ganga", service: "Trésor / DAF (Régie)", views: ["tresor_demandes", "messagerie", "recharger_partenaire", "tresor"] },
   { username: "inspection", password: "inspection2026", nom: "Inspecteur Général", service: "Inspection Générale des Services", views: ["messagerie", "dossiers_contentieux", "audit"], readOnly: true },
   { username: "rh", password: "rh2026", nom: "A. Loubaki", service: "DGRH", views: ["messagerie", "rh"] },
   { username: "direction", password: "direction2026", nom: "Directeur Général", service: "Direction", views: ["messagerie", "recharger_partenaire", "validation_ministere", "cartographie", "dashboard", "dossiers_contentieux", "comptes", "audit", "rapports"] },
@@ -1184,6 +1185,7 @@ export default function SigefApp() {
           {view === "huissier_commandements" && <HuissierCommandements />}
           {view === "huissier_mandats" && <HuissierMandats />}
           {view === "messagerie" && <Messagerie currentUser={currentUser} />}
+          {view === "tresor_demandes" && <GuichetDemandes currentUser={currentUser} />}
           {view === "guichet_demandes" && <GuichetDemandes currentUser={currentUser} />}
 
           {/* VoIP - Appels internes */}

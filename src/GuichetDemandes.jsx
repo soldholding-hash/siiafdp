@@ -260,6 +260,8 @@ export default function GuichetDemandes({ currentUser }) {
   const [msg, setMsg] = useState(null);
   const [recherche, setRecherche] = useState("");
   const [paiementCible, setPaiementCible] = useState(null);
+  const estTresor = (currentUser?.service || "").includes("Trésor") || (currentUser?.service || "").includes("DAF");
+  const estGuichet = (currentUser?.service || "").includes("Guichet") && !estTresor;
 
   async function charger() {
     setLoading(true);
