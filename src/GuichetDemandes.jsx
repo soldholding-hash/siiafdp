@@ -432,6 +432,20 @@ export default function GuichetDemandes({ currentUser }) {
                 </button>
               )}
 
+              {d.statut === "en_attente_paiement" && (
+                <button onClick={() => setPaiementCible(d)}
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
+                  <CreditCard size={12} /> Valider le paiement
+                </button>
+              )}
+
+              {d.statut === "paye" && (
+                <button onClick={() => transmettreTopo(d)}
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
+                  <Send size={12} /> Transmettre au topographe
+                </button>
+              )}
+
 
             </div>
           ))}
@@ -441,6 +455,15 @@ export default function GuichetDemandes({ currentUser }) {
       <div className="bg-indigo-50 border border-indigo-200 rounded-sm p-4 text-xs text-indigo-900">
         <strong>Procédure :</strong> le guichet enregistre la demande du citoyen, puis la transmet au Trésor pour encaissement des frais. Une fois payé, le dossier revient au guichet qui l'oriente vers le service compétent (topographe ou conservation).
       </div>
+
+      {paiementCible && (
+        <ModalPaiement
+          demande={paiementCible}
+          agentNom={currentUser?.nom || "Agent Trésor"}
+          onClose={() => setPaiementCible(null)}
+          onDone={apresPaiement}
+        />
+      )}
 
       {showNouvelle && (
         <ModalNouvelleDemande
