@@ -455,7 +455,7 @@ export default function GuichetDemandes({ currentUser }) {
       )}
 
       <div className="bg-indigo-50 border border-indigo-200 rounded-sm p-4 text-xs text-indigo-900">
-        <strong>Procédure :</strong> le guichet enregistre la demande du citoyen, puis la transmet au Trésor pour encaissement des frais. Une fois payé, le dossier revient au guichet qui l'oriente vers le service compétent (topographe ou conservation).
+        <strong>Procédure :</strong> {estTresor ? "1. Le guichet transmet la demande. 2. Vous validez le paiement. 3. Vous transmettez le dossier au topographe pour le levé." : "Le guichet enregistre la demande, puis la transmet au Trésor pour encaissement des frais."}
       </div>
 
       {paiementCible && (
