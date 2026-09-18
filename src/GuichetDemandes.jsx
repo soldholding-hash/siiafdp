@@ -413,12 +413,7 @@ export default function GuichetDemandes({ currentUser }) {
                 </button>
               )}
 
-              {d.statut === "paye" && (
-                <button onClick={() => transmettreTopo(d)}
-                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-sm inline-flex items-center justify-center gap-1.5 text-xs font-medium">
-                  <Send size={12} /> Transmettre au topographe
-                </button>
-              )}
+
             </div>
           ))}
         </div>
