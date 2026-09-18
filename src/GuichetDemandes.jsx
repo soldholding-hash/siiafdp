@@ -3,7 +3,7 @@ import {
   Inbox, Plus, Loader2, X, CheckCircle, Clock, Send,
   User, FileText, Search, CreditCard
 } from "lucide-react";
-import { creerDemande, listerDemandes, transmettreTresor, transmettreTopographe } from "./lib/demandes";
+import { creerDemande, listerDemandes, transmettreTresor, transmettreTopographe, validerPaiement } from "./lib/demandes";
 
 const fmt = (n) => new Intl.NumberFormat("fr-FR").format(n || 0) + " FCFA";
 
@@ -280,6 +280,25 @@ export default function GuichetDemandes({ currentUser }) {
   async function apresPaiement() {
     setPaiementCible(null);
     setMsg({ ok: true, text: "Paiement validé. Le dossier repart au guichet pour transmission." });
+    await charger();
+    setTimeout(() => setMsg(null), 4000);
+  }
+
+  async function validerPaiementDemande(d) {
+    const ref = prompt("Référence de la quittance (ex: Q-2026-0451) :");
+    if (!ref) return;
+    const res = await validerPaiement(d.id, currentUser?.nom || "Agent Trésor", ref);
+    if (!res.ok) { setMsg({ ok: false, text: "Erreur : " + res.raison }); return; }
+    setMsg({ ok: true, text: "Paiement validé. Vous pouvez transmettre au topographe." });
+    await charger();
+    setTimeout(() => setMsg(null), 4000);
+  }
+
+  async function transmettreTopo(d) {
+    if (!confirm("Transmettre la demande " + d.reference + " au topographe ?")) return;
+    const res = await transmettreTopographe(d.id, currentUser?.nom || "Agent Trésor");
+    if (!res.ok) { setMsg({ ok: false, text: "Erreur : " + res.raison }); return; }
+    setMsg({ ok: true, text: "Demande " + d.reference + " transmise au topographe." });
     await charger();
     setTimeout(() => setMsg(null), 4000);
   }
