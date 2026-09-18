@@ -187,7 +187,15 @@ function ModalNouvelleDemande({ agentNom, onClose, onDone }) {
 // MODAL : Valider le paiement (Trésor)
 // ============================================
 function ModalPaiement({ demande, agentNom, onClose, onDone }) {
-  const [reference, setReference] = useState("");
+  // Générer automatiquement un numéro de quittance unique
+  const genererReference = () => {
+    const annee = new Date().getFullYear();
+    const aleatoire = Math.floor(1000 + Math.random() * 9000);
+    const timestamp = Date.now().toString().slice(-4);
+    return "Q-" + annee + "-" + timestamp + aleatoire;
+  };
+
+  const [reference, setReference] = useState(genererReference());
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
 
@@ -226,7 +234,9 @@ function ModalPaiement({ demande, agentNom, onClose, onDone }) {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-stone-500 block mb-1">Numéro de quittance *</label>
+            <label className="text-xs font-mono text-stone-500 block mb-1">
+              Numéro de quittance * <span className="text-emerald-600 font-normal">(généré automatiquement, modifiable)</span>
+            </label>
             <input value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder="Ex: QUIT-2026-0001"
